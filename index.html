@@ -291,4 +291,299 @@ NUEVO SALDO:           C$ 0.00
                 <button onclick="imprimirReciboBT()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] py-2 rounded-xl flex items-center justify-center gap-1">
                     <i class="fa-solid fa-print"></i> Imprimir BT
                 </button>
-                <button onclick="cerrarKardex()" class="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-30
+                <button onclick="cerrarKardex()" class="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs py-2 rounded-xl font-bold">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- LOGICA JAVASCRIPT                          -->
+    <!-- ========================================== -->
+    <script>
+        // ESTADO GLOBAL
+        let usuarios = [
+            { id: 1, nombre: 'Administrador Principal', user: 'admin', pass: '1234', rol: 'admin', cedula: '441-120588-0003K' },
+            { id: 2, nombre: 'Analista de Crédito', user: 'analista', pass: '1234', rol: 'analista', cedula: '441-101090-0015L' }
+        ];
+
+        let clientes = [
+            { id: 1, nombre: 'JANETJ CANO MARTINEZ', cedula: '441-220490-0012L', telefono: '88882222', direccion: 'Molino Sur, Matagalpa', saldo: 13520, cuota: 338, historial: [] },
+            { id: 2, nombre: 'ABRAHAM DIONISIO ARAUZ', cedula: '441-120588-0003K', telefono: '88881111', direccion: 'Guanuca, Matagalpa', saldo: 27040, cuota: 676, historial: [] }
+        ];
+
+        let usuarioLogueado = null;
+        let clienteActivo = null;
+
+        // AUTHENTICATION
+        function ejecutarLogin(e) {
+            e.preventDefault();
+            let u = document.getElementById('loginUser').value.trim();
+            let p = document.getElementById('loginPass').value.trim();
+
+            let en = usuarios.find(x => x.user.toLowerCase() === u.toLowerCase() && x.pass === p);
+            if(en) {
+                usuarioLogueado = en;
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('roleText').innerText = `Usuario: ${en.nombre} (${en.rol.toUpperCase()})`;
+                
+                if(en.rol === 'analista') {
+                    document.getElementById('nav-personal').classList.add('hidden');
+                } else {
+                    document.getElementById('nav-personal').classList.remove('hidden');
+                }
+
+                renderClientes();
+                renderUsuarios();
+                initChart();
+            } else {
+                alert('Usuario o contraseña incorrectos.');
+            }
+        }
+
+        function cerrarSesion() {
+            usuarioLogueado = null;
+            document.getElementById('loginUser').value = 'admin';
+            document.getElementById('loginPass').value = '1234';
+            document.getElementById('loginScreen').classList.remove('hidden');
+            switchTab('scorecard');
+        }
+
+        // NAVIGATION
+        function switchTab(id) {
+            if(usuarioLogueado && usuarioLogueado.rol === 'analista' && id === 'personal') {
+                alert('Acceso restringido para el perfil de Analista.');
+                return;
+            }
+
+            ['scorecard', 'clientes', 'personal', 'simulador'].forEach(t => {
+                document.getElementById('tab-' + t).classList.add('hidden');
+                document.getElementById('nav-' + t).classList.replace('text-blue-400', 'text-gray-400');
+            });
+            document.getElementById('tab-' + id).classList.remove('hidden');
+            document.getElementById('nav-' + id).classList.replace('text-gray-400', 'text-blue-400');
+            if(id === 'scorecard') initChart();
+        }
+
+        // FINANCIAL SIMULATOR
+        function calcularSimulacion() {
+            let p = parseFloat(document.getElementById('simMonto').value) || 0;
+            let com = (p / 10000) * 400; // C$400 por cada C$10,000 (4%)
+            if(p < 4000) com = 100;
+
+            let fin = p + com;
+            let int = fin * 0.30;
+            let tot = fin + int;
+            let cuo = tot / 40;
+
+            document.getElementById('simComision').innerText = `C$ ${com.toFixed(2)}`;
+            document.getElementById('simFinanciado').innerText = `C$ ${fin.toFixed(2)}`;
+            document.getElementById('simInteres').innerText = `C$ ${int.toFixed(2)}`;
+            document.getElementById('simTotal').innerText = `C$ ${tot.toFixed(2)}`;
+            document.getElementById('simCuota').innerText = `C$ ${cuo.toFixed(2)}`;
+        }
+
+        // CLIENT MANAGEMENT
+        function renderClientes() {
+            let cont = document.getElementById('listaClientesContainer');
+            let q = document.getElementById('searchClientInput').value.toLowerCase();
+            
+            let list = clientes.filter(c => c.nombre.toLowerCase().includes(q) || c.cedula.includes(q));
+
+            cont.innerHTML = list.map(c => `
+                <div onclick="abrirKardex(${c.id})" class="glass-card p-3 rounded-xl flex justify-between items-center cursor-pointer hover:bg-gray-800/80 transition">
+                    <div>
+                        <h4 class="font-bold text-sm text-white">${c.nombre}</h4>
+                        <p class="text-[10px] text-gray-400">Cédula: ${c.cedula}</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs font-black text-blue-400 block">C$ ${c.saldo.toFixed(2)}</span>
+                        <span class="text-[9px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-bold">Cuota: C$ ${c.cuota.toFixed(2)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filtrarClientes() { renderClientes(); }
+
+        function abrirModalNuevoCliente() {
+            document.getElementById('modalNuevoCliente').classList.remove('hidden');
+        }
+        function cerrarModalNuevoCliente() {
+            document.getElementById('modalNuevoCliente').classList.add('hidden');
+        }
+
+        function guardarNuevoCliente(e) {
+            e.preventDefault();
+            let monto = parseFloat(document.getElementById('cliMonto').value);
+            let com = (monto / 10000) * 400;
+            let fin = monto + com;
+            let tot = fin + (fin * 0.30);
+            let cuo = tot / 40;
+
+            let nuevo = {
+                id: Date.now(),
+                nombre: document.getElementById('cliNombre').value,
+                cedula: document.getElementById('cliCedula').value,
+                telefono: document.getElementById('cliTel').value,
+                direccion: document.getElementById('cliDireccion').value,
+                saldo: tot,
+                cuota: cuo,
+                historial: []
+            };
+
+            clientes.push(nuevo);
+            renderClientes();
+            cerrarModalNuevoCliente();
+            alert('Cliente y préstamo registrados correctamente.');
+        }
+
+        // KARDEX & PRINTER PT210
+        function abrirKardex(id) {
+            clienteActivo = clientes.find(c => c.id === id);
+            if(!clienteActivo) return;
+
+            document.getElementById('kdNombre').innerText = clienteActivo.nombre;
+            document.getElementById('kdCedula').innerText = clienteActivo.cedula;
+            document.getElementById('kdSaldo').innerText = `C$ ${clienteActivo.saldo.toFixed(2)}`;
+            document.getElementById('kdCuotaValor').innerText = `C$ ${clienteActivo.cuota.toFixed(2)}`;
+            
+            document.getElementById('btnLlamar').href = `tel:${clienteActivo.telefono}`;
+            document.getElementById('btnWhatsapp').href = `https://wa.me/505${clienteActivo.telefono}?text=Hola%20${encodeURIComponent(clienteActivo.nombre)},%20le%20recordamos%20su%20pago%20pendiente.`;
+            document.getElementById('btnMapa').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clienteActivo.direccion + ', Matagalpa')}`;
+
+            actualizarTicketPreview(0);
+            renderHistorialKardex();
+            document.getElementById('modalKardex').classList.remove('hidden');
+        }
+
+        function cerrarKardex() {
+            document.getElementById('modalKardex').classList.add('hidden');
+        }
+
+        function aplicarAbono() {
+            let m = parseFloat(document.getElementById('inputAbonoMonto').value);
+            if(!m || m <= 0) return alert('Ingrese un monto válido');
+
+            clienteActivo.saldo -= m;
+            clienteActivo.historial.unshift({ fecha: new Date().toLocaleDateString(), monto: m });
+            
+            document.getElementById('kdSaldo').innerText = `C$ ${clienteActivo.saldo.toFixed(2)}`;
+            actualizarTicketPreview(m);
+            document.getElementById('inputAbonoMonto').value = '';
+            
+            renderHistorialKardex();
+            renderClientes();
+            alert(`Abono de C$ ${m.toFixed(2)} registrado correctamente.`);
+        }
+
+        function aplicarCuotaCompleta() {
+            document.getElementById('inputAbonoMonto').value = clienteActivo.cuota.toFixed(2);
+            aplicarAbono();
+        }
+
+        function actualizarTicketPreview(montoAbonado) {
+            let nom = clienteActivo.nombre.padEnd(23).substring(0, 23);
+            let monStr = (`C$ ${montoAbonado.toFixed(2)}`).padStart(14);
+            let salStr = (`C$ ${clienteActivo.saldo.toFixed(2)}`).padStart(14);
+
+            document.getElementById('ticketPreviewBox').innerText = 
+`================================
+     CRÉDITOS Y COBRANZAS       
+     MATAGALPA - NICARAGUA      
+================================
+RECIBO DE PAGO:  #REC-20261028-01
+--------------------------------
+CLIENTE: ${nom}
+--------------------------------
+MONTO RECIBIDO: ${monStr}
+NUEVO SALDO:    ${salStr}
+================================
+  ¡GRACIAS POR SU PUNTUAL PAGO! `;
+        }
+
+        function renderHistorialKardex() {
+            let cont = document.getElementById('kdHistorial');
+            if(clienteActivo.historial.length === 0) {
+                cont.innerHTML = `<span class="text-gray-500 italic">No hay abonos registrados</span>`;
+                return;
+            }
+            cont.innerHTML = clienteActivo.historial.map(h => `
+                <div class="flex justify-between border-b border-gray-800 pb-1">
+                    <span class="text-gray-400">${h.fecha}</span>
+                    <strong class="text-emerald-400">- C$ ${h.monto.toFixed(2)}</strong>
+                </div>
+            `).join('');
+        }
+
+        async function imprimirReciboBT() {
+            if(!clienteActivo) return;
+            if (!navigator.bluetooth) {
+                alert('Web Bluetooth API no disponible en este navegador.');
+                return;
+            }
+            try {
+                let device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
+                });
+                alert(`Conectando con ${device.name || 'Impresora PT210'}... Imprimiendo recibo de ${clienteActivo.nombre}.`);
+            } catch (err) {
+                alert('Impresión cancelada o dispositivo no seleccionado.');
+            }
+        }
+
+        // USER MANAGEMENT
+        function guardarUsuario(e) {
+            e.preventDefault();
+            let u = {
+                id: Date.now(),
+                nombre: document.getElementById('usrNombre').value,
+                cedula: document.getElementById('usrCedula').value,
+                user: document.getElementById('usrUser').value,
+                pass: document.getElementById('usrPass').value,
+                rol: document.getElementById('usrRol').value
+            };
+
+            usuarios.push(u);
+            renderUsuarios();
+            alert('Usuario registrado con éxito.');
+            e.target.reset();
+        }
+
+        function renderUsuarios() {
+            let cont = document.getElementById('listaUsuariosContainer');
+            cont.innerHTML = usuarios.map(u => `
+                <div class="bg-gray-900/60 p-2.5 rounded-xl border border-gray-800 flex justify-between items-center">
+                    <div>
+                        <strong class="text-white block">${u.nombre}</strong>
+                        <span class="text-[9px] text-gray-400">User: ${u.user} | Cédula: ${u.cedula}</span>
+                    </div>
+                    <span class="text-[9px] uppercase px-2 py-0.5 rounded font-bold ${u.rol === 'admin' ? 'bg-purple-500/20 text-purple-300' : 'bg-blue-500/20 text-blue-300'}">${u.rol}</span>
+                </div>
+            `).join('');
+        }
+
+        // SCORECARD CHART
+        let chart;
+        function initChart() {
+            let ctx = document.getElementById('scoreChart').getContext('2d');
+            if(chart) chart.destroy();
+            chart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Al Corriente', 'Próximos', 'Por Vencer', 'Alerta'],
+                    datasets: [{
+                        data: [30340, 13990, 29423, 56697],
+                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { plugins: { legend: { display: false } }, cutout: '72%' }
+            });
+        }
+
+        // INIT
+        calcularSimulacion();
+    </script>
+</body>
+</html>
