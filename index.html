@@ -1,0 +1,1111 @@
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gestor de Crédito y Cobranza - PT210 Printer & Scorecard</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: {
+                            800: '#1e3a8a',
+                            900: '#0f172a',
+                        },
+                        debt: {
+                            orange: '#f97316',
+                            header: '#ea580c',
+                            alCorriente: '#2563eb',
+                            proximos: '#10b981',
+                            porVencer: '#f59e0b',
+                            vencidos: '#f97316',
+                            alerta: '#ef4444'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        .modal-transition {
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+
+        /* Ticket 58mm Monospace Formatting (Exact 32 Chars) */
+        .ticket-58mm {
+            width: 270px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            line-height: 1.25;
+            background: #0f172a;
+            color: #34d399;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+            white-space: pre;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col pb-20">
+
+    <!-- TOP HEADER MULTI-ROL -->
+    <header class="bg-debt-header text-white sticky top-0 z-30 shadow-md">
+        <div class="max-w-md mx-auto px-4 py-2.5 flex flex-col gap-2">
+            
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-amber-400 text-slate-900 flex items-center justify-center font-black text-sm">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-sm font-bold leading-tight">CrediCobro Pro</h1>
+                        <p class="text-[10px] text-orange-200" id="userRouteDisplay">Ruta: Vista Global Administrador</p>
+                    </div>
+                </div>
+
+                <!-- Role Selector Dropdown -->
+                <select id="roleSelector" onchange="cambiarRol(this.value)" class="bg-white/10 text-white text-xs px-2 py-1 rounded-lg border border-white/20 font-bold outline-none">
+                    <option value="ADMIN" class="text-slate-900">Admin (Vista Global)</option>
+                    <option value="COBRADOR_1" class="text-slate-900">Carlos (Matagalpa)</option>
+                    <option value="COBRADOR_2" class="text-slate-900">Ana (Sébaco/La Dalia)</option>
+                </select>
+            </div>
+
+            <!-- Connection & Printer Status Bar -->
+            <div class="flex items-center justify-between text-[11px] pt-1 border-t border-orange-500/50">
+                <button onclick="conectarImpresoraBT()" class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/20 hover:bg-white/30 font-semibold border border-white/30">
+                    <i class="fa-brands fa-bluetooth-b text-amber-300"></i>
+                    <span id="printerStatus">BT: PT210 Desconectada</span>
+                </button>
+
+                <div id="netStatusBadge" class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-100 border border-emerald-400/30 font-semibold">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="netStatusText">Online</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sync Queue Alert Banner -->
+        <div id="syncBanner" class="bg-amber-400 text-slate-900 text-xs px-4 py-1.5 font-bold flex items-center justify-between hidden">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-arrows-rotate animate-spin"></i>
+                <span>Pagos pendientes offline: <strong id="syncCount">0</strong></span>
+            </div>
+            <button onclick="fuerzaSincronizacion()" class="bg-slate-900 text-white px-2 py-0.5 rounded text-[10px] uppercase font-bold">
+                Sincronizar
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN APP CONTAINER -->
+    <main class="max-w-md mx-auto w-full px-3 pt-3 flex-1 flex flex-col gap-3">
+
+        <!-- ==================== PESTAÑA 1: SCORECARD / TABLERO ==================== -->
+        <div id="tabScorecard" class="flex flex-col gap-3">
+            
+            <!-- Moneda & Total Portfolio Balance -->
+            <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center">
+                <div>
+                    <span class="text-[10px] text-slate-500 uppercase font-extrabold tracking-wider">Moneda Operativa</span>
+                    <h2 class="text-xl font-black text-slate-900">NIO (C$)</h2>
+                </div>
+                <button onclick="exportarExcelCSV()" class="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-xs px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all">
+                    <i class="fa-solid fa-file-excel text-emerald-600 text-sm"></i> Exportar
+                </button>
+            </div>
+
+            <!-- Scorecard Summary & Canvas Pie Chart -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                <div class="flex justify-between items-center border-b pb-2">
+                    <div>
+                        <span class="text-xs font-bold text-slate-500 uppercase">Balance Total</span>
+                        <h3 class="text-lg font-black text-slate-900" id="scBalanceTotal">NIO 738,991.00</h3>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs font-bold text-slate-500 uppercase">Registros</span>
+                        <span class="block text-sm font-black text-slate-800" id="scTotalRegs">101</span>
+                    </div>
+                </div>
+
+                <!-- Chart.js Container -->
+                <div class="relative w-44 h-44 mx-auto my-2">
+                    <canvas id="scorecardPieCanvas"></canvas>
+                </div>
+
+                <!-- Categorías Table Breakdown -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-[11px] border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 border-b font-bold">
+                                <th class="p-1.5">Nivel</th>
+                                <th class="p-1.5 text-right">Monto</th>
+                                <th class="p-1.5 text-right">%</th>
+                                <th class="p-1.5 text-right">Regs</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scTableBodyMarcadores">
+                            <!-- Injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Reporte Transacciones Cargos vs Pagos -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden text-xs">
+                <div class="bg-slate-50 px-3 py-2 font-bold text-slate-700 uppercase tracking-wider text-[10px] border-b">
+                    Histórico Transacciones (Cargos vs Pagos)
+                </div>
+                <div class="divide-y divide-slate-100 text-[11px]" id="scTableBodyTransacciones">
+                    <!-- Injected by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== PESTAÑA 2: LISTA CLIENTES / MARCADORES ==================== -->
+        <div id="tabClientes" class="flex flex-col gap-3 hidden">
+            <!-- Buscador y Filtro -->
+            <div class="flex gap-2">
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                    <input type="text" id="inputBusquedaClientes" oninput="renderizarListadoClientes()" placeholder="Buscar cliente por nombre o dirección..." 
+                        class="w-full pl-8 pr-3 py-2 border border-slate-300 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-debt-orange">
+                </div>
+                <button onclick="abrirModalClienteNuevo()" class="bg-debt-orange text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 shadow-md active:scale-95">
+                    <i class="fa-solid fa-user-plus"></i> Nuevo
+                </button>
+            </div>
+
+            <!-- Container Lista Clientes -->
+            <div id="listaClientesContainer" class="flex flex-col gap-2">
+                <!-- Rendered dynamically -->
+            </div>
+        </div>
+
+        <!-- ==================== PESTAÑA 3: KARDEX BALANCE CLIENTE (DETALLE EXPLICITO) ==================== -->
+        <div id="tabBalanceCliente" class="flex flex-col gap-3 hidden">
+            <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
+                <button onclick="switchTab('clientes')" class="text-debt-orange font-bold text-xs flex items-center gap-1">
+                    <i class="fa-solid fa-arrow-left text-sm"></i> Volver a Clientes
+                </button>
+                <div class="flex gap-3 text-slate-600 text-sm">
+                    <button onclick="abrirModalClienteEditar(appState.selectedClientId)" title="Editar Cliente"><i class="fa-solid fa-user-pen"></i></button>
+                    <button onclick="abrirModalClienteNuevo()" title="Nuevo Cliente"><i class="fa-solid fa-user-plus text-debt-orange"></i></button>
+                </div>
+            </div>
+
+            <!-- Encabezado Cliente Kardex -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-3">
+                <h2 class="text-center font-black text-slate-900 text-base uppercase tracking-wide border-b pb-2" id="balNombreCliente">
+                    JANETJ CANO MARTINEZ
+                </h2>
+
+                <div class="flex items-center justify-between gap-3">
+                    <!-- Avatar -->
+                    <div class="w-16 h-16 rounded-full bg-amber-100 border-2 border-amber-400 flex items-center justify-center text-amber-600 text-2xl font-bold overflow-hidden shadow-inner flex-shrink-0" id="balAvatar">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+
+                    <!-- Detalle Valores -->
+                    <div class="flex-1 flex flex-col gap-1.5 text-xs">
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-500 font-medium">Pago acordado</span>
+                            <div class="flex items-center gap-1.5">
+                                <strong class="text-slate-900 font-bold text-sm" id="balPagoAcordado">NIO 270.00</strong>
+                                <button onclick="abrirModalAbonoDirecto(appState.selectedClientId)" class="w-6 h-6 bg-emerald-500 text-white rounded-md flex items-center justify-center font-bold text-xs active:scale-95 shadow">
+                                    <i class="fa-solid fa-minus"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center border-t pt-1">
+                            <span class="text-slate-500 font-medium">Agendado</span>
+                            <strong class="text-slate-900 font-bold" id="balAgendadoFecha">27 oct 2026</strong>
+                        </div>
+
+                        <div class="flex justify-between items-center border-t pt-1">
+                            <span class="text-slate-500 font-medium">Saldo</span>
+                            <div class="flex items-center gap-1.5">
+                                <strong class="text-slate-900 font-black text-base" id="balSaldoTotal">NIO 10,160.00</strong>
+                                <button onclick="abrirModalClienteNuevo()" class="w-6 h-6 bg-debt-orange text-white rounded-md flex items-center justify-center font-bold text-xs active:scale-95 shadow">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6 Botones Circulares de Acción Rápida -->
+                <div class="grid grid-cols-6 gap-1 pt-2 border-t border-slate-100 text-center">
+                    <button onclick="accionLlamarCliente()" class="flex flex-col items-center gap-1 active:scale-95">
+                        <div class="w-9 h-9 rounded-full border border-amber-400 text-amber-600 flex items-center justify-center text-sm shadow-sm bg-amber-50">
+                            <i class="fa-solid fa-phone"></i>
+                        </div>
+                        <span class="text-[9px] font-semibold text-slate-600">Llamar</span>
+                    </button>
+
+                    <button onclick="accionWhatsAppCliente()" class="flex flex-col items-center gap-1 active:scale-95">
+                        <div class="w-9 h-9 rounded-full border border-emerald-500 text-emerald-600 flex items-center justify-center text-sm shadow-sm bg-emerald-50">
+                            <i class="fa-brands fa-whatsapp"></i>
+                        </div>
+                        <span class="text-[9px] font-semibold text-slate-600">WhatsApp</span>
+                    </button>
+
+                    <button onclick="accionSmartShare()" class="flex flex-col items-center gap-1 active:scale-95">
+                        <div class="w-9 h-9 rounded-full border border-amber-500 text-amber-600 flex items-center justify-center text-sm shadow-sm bg-amber-50">
+                            <i class="fa-solid fa-share-nodes"></i>
+                        </div>
+                        <span class="text-[9px] font-semibold text-slate-600">SmartShare</span>
+                    </button>
+
+                    <button onclick="accionAbrirMapa()" class="flex flex-col items-center gap-1 active:scale-95">
+                        <div class="w-9 h-9 rounded-full border border-purple-400 text-purple-600 flex items-center justify-center text-sm shadow-sm bg-purple-50">
+                            <i class="fa-solid fa-location-dot"></i>
+                        </div>
+                        <span class="text-[9px] font-semibold text-slate-600">Mapa</span>
+                    </button>
+
+                    <button onclick="abrirModalVistaPreviaTicket(appState.selectedClientId)" class="flex flex-col items-center gap-1 active:scale-95">
+                        <div class="w-9 h-9 rounded-full border border-orange-500 text-orange-600 flex items-center justify-center text-sm shadow-sm bg-orange-50">
+                            <i class="fa-solid fa-print"></i>
+                        </div>
+                        <span class="text-[9px] font-semibold text-slate-600">Imprimir</span>
+                    </button>
+
+                    <button onclick="abrirModalReagendar()" class="flex flex-col items-center gap-1 active:scale-95">
+                        <div class="w-9 h-9 rounded-full border border-rose-400 text-rose-600 flex items-center justify-center text-sm shadow-sm bg-rose-50">
+                            <i class="fa-solid fa-calendar-days"></i>
+                        </div>
+                        <span class="text-[9px] font-semibold text-slate-600">Reagenda</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Kardex Historial de Transacciones -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                <div class="bg-slate-50 px-3 py-2 font-bold text-slate-700 text-xs uppercase tracking-wider text-center border-b">
+                    Historial Kardex Transacciones
+                </div>
+                
+                <div id="listaTransaccionesCliente" class="flex flex-col divide-y divide-slate-100 text-xs">
+                    <!-- Rendered by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== PESTAÑA 4: SIMULADOR DE CRÉDITO ==================== -->
+        <div id="tabSimulador" class="flex flex-col gap-3 hidden">
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-3">
+                <h3 class="font-black text-slate-900 text-sm border-b pb-2 flex items-center gap-1.5">
+                    <i class="fa-solid fa-calculator text-debt-orange"></i> Simulador Financiero Oficial
+                </h3>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Monto Principal Solicitado (C$)</label>
+                    <input type="number" id="simMontoInput" value="10000" min="4000" step="500" oninput="ejecutarSimulacionFinanciera()" 
+                        class="w-full p-2.5 border border-slate-300 rounded-xl text-base font-black text-slate-900 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-debt-orange">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="bg-slate-50 p-2.5 rounded-xl border">
+                        <span class="text-slate-500 block text-[10px]">Comisión por Tramo</span>
+                        <strong id="simComisionVal" class="text-sm font-black text-slate-900">C$ 400.00</strong>
+                    </div>
+                    <div class="bg-slate-50 p-2.5 rounded-xl border">
+                        <span class="text-slate-500 block text-[10px]">Monto Base Financiado</span>
+                        <strong id="simFinanciadoVal" class="text-sm font-black text-slate-900">C$ 10,400.00</strong>
+                    </div>
+                    <div class="bg-slate-50 p-2.5 rounded-xl border">
+                        <span class="text-slate-500 block text-[10px]">Interés Total (30% / 2M)</span>
+                        <strong id="simInteresVal" class="text-sm font-black text-slate-900">C$ 3,120.00</strong>
+                    </div>
+                    <div class="bg-slate-50 p-2.5 rounded-xl border">
+                        <span class="text-slate-500 block text-[10px]">Total a Pagar</span>
+                        <strong id="simTotalVal" class="text-sm font-black text-slate-900">C$ 13,520.00</strong>
+                    </div>
+                </div>
+
+                <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-center flex flex-col items-center">
+                    <span class="text-[11px] font-bold text-emerald-800 uppercase">Cuota Efectiva Pactada (40 Pagos)</span>
+                    <strong id="simCuotaVal" class="text-2xl font-black text-emerald-700">C$ 338.00 /cuota</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== PESTAÑA 5: ADMIN PANEL ==================== -->
+        <div id="tabAdmin" class="flex flex-col gap-3 hidden">
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-3">
+                <h3 class="font-black text-slate-900 text-sm border-b pb-2 flex items-center gap-1.5">
+                    <i class="fa-solid fa-users-gear text-debt-orange"></i> Reasignación de Carteras por Ruta
+                </h3>
+
+                <p class="text-xs text-slate-500">Transfiera deudores entre cobradores para balancear la carga de cobro en campo.</p>
+
+                <div id="adminCarterasLista" class="flex flex-col gap-2 text-xs">
+                    <!-- Injected by JS -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- NAVEGACIÓN INFERIOR PWA PESTAÑAS -->
+    <nav class="bg-white border-t border-slate-200 fixed bottom-0 left-0 right-0 z-40 flex justify-around py-2 shadow-lg max-w-md mx-auto text-[10px] font-bold text-slate-500">
+        <button onclick="switchTab('scorecard')" id="nav-scorecard" class="flex flex-col items-center gap-0.5 text-debt-orange">
+            <i class="fa-solid fa-chart-pie text-base"></i> Scorecard
+        </button>
+        <button onclick="switchTab('clientes')" id="nav-clientes" class="flex flex-col items-center gap-0.5">
+            <i class="fa-solid fa-users text-base"></i> Clientes
+        </button>
+        <button onclick="switchTab('simulador')" id="nav-simulador" class="flex flex-col items-center gap-0.5">
+            <i class="fa-solid fa-calculator text-base"></i> Simulador
+        </button>
+        <button onclick="switchTab('admin')" id="nav-admin" class="flex flex-col items-center gap-0.5">
+            <i class="fa-solid fa-shield-halved text-base"></i> Admin
+        </button>
+    </nav>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed top-14 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs px-4 py-2 rounded-xl shadow-2xl flex items-center gap-2 border border-slate-700 opacity-0 pointer-events-none transition-all duration-300">
+        <i class="fa-solid fa-circle-info text-amber-400" id="toastIcon"></i>
+        <span id="toastMsg">Notificación</span>
+    </div>
+
+    <!-- MODAL REGISTRO ABONO EFECTIVO -->
+    <div id="modalAbono" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end justify-center p-0 opacity-0 pointer-events-none modal-transition">
+        <div class="bg-white w-full max-w-md rounded-t-2xl p-4 flex flex-col gap-3 shadow-2xl">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-bold text-slate-800 text-sm"><i class="fa-solid fa-money-bill-wave text-emerald-600 mr-1"></i> Registrar Abono de Campo</h3>
+                <button onclick="cerrarModales()" class="text-slate-400 font-bold text-lg">&times;</button>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Monto a Cobrar (NIO)</label>
+                <input type="number" id="inputMontoAbono" required min="1" step="0.01" class="w-full p-2.5 border border-slate-300 rounded-xl text-lg font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button onclick="cerrarModales()" class="flex-1 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold">Cancelar</button>
+                <button onclick="confirmarAbono()" class="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-md active:scale-95">Guardar Pago</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL REAGENDAR -->
+    <div id="modalReagendar" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 pointer-events-none modal-transition">
+        <div class="bg-white w-full max-w-xs rounded-2xl p-4 flex flex-col gap-3 shadow-2xl">
+            <h3 class="font-bold text-slate-800 text-sm"><i class="fa-solid fa-calendar-plus text-debt-orange mr-1"></i> Reagendar Pago</h3>
+            <input type="date" id="inputNuevaFecha" class="w-full p-2 border border-slate-300 rounded-lg text-xs font-bold">
+            <div class="flex gap-2 justify-end pt-2">
+                <button onclick="cerrarModales()" class="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold">Cancelar</button>
+                <button onclick="guardarReagenda()" class="px-3 py-1.5 bg-debt-orange text-white rounded-lg text-xs font-bold">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL VISTA PREVIA IMPRESIÓN PT210 ESC/POS -->
+    <div id="modalImpresion" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 pointer-events-none modal-transition">
+        <div class="bg-white rounded-2xl w-full max-w-xs p-4 flex flex-col gap-3 shadow-2xl">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                    <i class="fa-solid fa-print text-debt-orange"></i> Vista Previa Ticket (PT210 58mm)
+                </h3>
+                <button onclick="cerrarModales()" class="text-slate-400 font-bold text-lg">&times;</button>
+            </div>
+
+            <!-- Receipt Box (32 Character Limit) -->
+            <div class="flex justify-center">
+                <div id="ticketPreviewBox" class="ticket-58mm">
+                    <!-- Text injected by JS -->
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="imprimirTicketBluetoothPT210()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 shadow-md">
+                    <i class="fa-brands fa-bluetooth-b"></i> Imprimir PT210
+                </button>
+                <button onclick="cerrarModales()" class="px-3 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL NUEVO / EDITAR CLIENTE -->
+    <div id="modalCliente" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 opacity-0 pointer-events-none modal-transition">
+        <div class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-4 flex flex-col gap-3 shadow-2xl max-h-[92vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-bold text-slate-800 text-sm" id="modalClienteTitulo">Cliente</h3>
+                <button onclick="cerrarModales()" class="text-slate-400 font-bold text-lg">&times;</button>
+            </div>
+
+            <form id="formCliente" onsubmit="event.preventDefault(); guardarClienteForm();" class="flex flex-col gap-2 text-xs">
+                <input type="hidden" id="cliId">
+
+                <div>
+                    <label class="block text-slate-500 mb-0.5">Nombre Completo*</label>
+                    <input type="text" id="cliNombre" required placeholder="Nombre del cliente" class="w-full p-2 border border-slate-300 rounded-lg font-bold">
+                </div>
+
+                <div>
+                    <label class="block text-slate-500 mb-0.5">Teléfono Móvil</label>
+                    <input type="text" id="cliTel" placeholder="88888888" class="w-full p-2 border border-slate-300 rounded-lg">
+                </div>
+
+                <div>
+                    <label class="block text-slate-500 mb-0.5">Dirección / Comunidad</label>
+                    <input type="text" id="cliDireccion" placeholder="Ubicación de cobro" class="w-full p-2 border border-slate-300 rounded-lg">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-slate-500 mb-0.5">Monto Préstamo (C$)</label>
+                        <input type="number" id="cliMontoBase" required min="4000" step="500" value="10000" class="w-full p-2 border border-slate-300 rounded-lg font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-slate-500 mb-0.5">Ruta Asignada</label>
+                        <select id="cliCobradorSelect" class="w-full p-2 border border-slate-300 rounded-lg bg-white font-bold">
+                            <option value="COBRADOR_1">Carlos Mendoza (Matagalpa)</option>
+                            <option value="COBRADOR_2">Ana Torres (Sébaco)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="cerrarModales()" class="flex-1 py-2 bg-slate-100 text-slate-700 rounded-lg font-bold">Cancelar</button>
+                    <button type="submit" class="flex-1 py-2 bg-debt-orange text-white rounded-lg font-bold shadow-md">Guardar Cliente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== LÓGICA JAVASCRIPT ==================== -->
+    <script>
+        // DATASET INICIAL DE PRUEBA
+        const CLIENTES_INICIALES = [
+            {
+                id: 'CL-200',
+                nombre: 'JANETJ CANO MARTINEZ',
+                tel: '88334455',
+                direccion: 'Matagalpa, Barrio Guanuca',
+                montoOriginal: 10000,
+                saldoActual: 10160,
+                cuotaPactada: 270,
+                fechaVenc: '27 oct 2026',
+                diasAtraso: 1,
+                cobradorId: 'COBRADOR_1',
+                transacciones: [
+                    { id: 't1', fecha: '26 oct 2026', tipo: 'Pago', monto: -250.00, saldoResultante: 10160.00 },
+                    { id: 't2', fecha: '23 oct 2026', tipo: 'Pago', monto: -250.00, saldoResultante: 10410.00 },
+                    { id: 't3', fecha: '22 oct 2026', tipo: 'PRESTAMO', monto: 13520.00, saldoResultante: 10660.00 }
+                ]
+            },
+            {
+                id: 'CL-201',
+                nombre: 'ABRAHAM DIONISIO ARAUZ',
+                tel: '88112233',
+                direccion: 'Molino Sur, Matagalpa',
+                montoOriginal: 10000,
+                saldoActual: 7730,
+                cuotaPactada: 2050,
+                fechaVenc: '29 oct 2026',
+                diasAtraso: -1,
+                cobradorId: 'COBRADOR_1',
+                transacciones: [
+                    { id: 't4', fecha: '26 oct 2026', tipo: 'Pago', monto: -2050.00, saldoResultante: 7730.00 }
+                ]
+            },
+            {
+                id: 'CL-202',
+                nombre: 'EDWIN ANTONIO TORREZ',
+                tel: '88445566',
+                direccion: 'Sébaco Centro',
+                montoOriginal: 5000,
+                saldoActual: 3360,
+                cuotaPactada: 700,
+                fechaVenc: '29 oct 2026',
+                diasAtraso: -1,
+                cobradorId: 'COBRADOR_2',
+                transacciones: []
+            },
+            {
+                id: 'CL-203',
+                nombre: 'ISAURA MARCELA THOMAS',
+                tel: '88778899',
+                direccion: 'La Dalia Km 130',
+                montoOriginal: 12000,
+                saldoActual: 12532,
+                cuotaPactada: 1000,
+                fechaVenc: '15 oct 2026',
+                diasAtraso: 13,
+                cobradorId: 'COBRADOR_2',
+                transacciones: []
+            }
+        ];
+
+        let appState = {
+            currentRole: 'ADMIN',
+            activeTab: 'scorecard',
+            selectedClientId: 'CL-200',
+            clientes: [],
+            offlineQueue: [],
+            btDevice: null,
+            btCharacteristic: null
+        };
+
+        let chartInstance = null;
+
+        window.onload = () => {
+            cargarEstadoLocal();
+            switchTab('scorecard');
+            ejecutarSimulacionFinanciera();
+        };
+
+        function cargarEstadoLocal() {
+            const saved = localStorage.getItem('credi_cobro_db_v1');
+            appState.clientes = saved ? JSON.parse(saved) : CLIENTES_INICIALES;
+            appState.offlineQueue = JSON.parse(localStorage.getItem('credi_cobro_queue') || '[]');
+            actualizarBannerSync();
+        }
+
+        function guardarEstadoLocal() {
+            localStorage.setItem('credi_cobro_db_v1', JSON.stringify(appState.clientes));
+            localStorage.setItem('credi_cobro_queue', JSON.stringify(appState.offlineQueue));
+            actualizarBannerSync();
+        }
+
+        // CONTROL PESTAÑAS
+        function switchTab(tabName) {
+            appState.activeTab = tabName;
+
+            ['scorecard', 'clientes', 'balanceCliente', 'simulador', 'admin'].forEach(t => {
+                const el = document.getElementById('tab' + capitalize(t));
+                if (el) el.classList.add('hidden');
+
+                const nav = document.getElementById('nav-' + t);
+                if (nav) {
+                    nav.classList.remove('text-debt-orange');
+                    nav.classList.add('text-slate-500');
+                }
+            });
+
+            const currentTabEl = document.getElementById('tab' + capitalize(tabName));
+            if (currentTabEl) currentTabEl.classList.remove('hidden');
+
+            const currentNav = document.getElementById('nav-' + tabName);
+            if (currentNav) {
+                currentNav.classList.remove('text-slate-500');
+                currentNav.classList.add('text-debt-orange');
+            }
+
+            if (tabName === 'scorecard') renderizarScorecard();
+            if (tabName === 'clientes') renderizarListadoClientes();
+            if (tabName === 'balanceCliente') renderizarPantallaBalanceCliente();
+            if (tabName === 'admin') renderizarAdminPanel();
+        }
+
+        function cambiarRol(rol) {
+            appState.currentRole = rol;
+            const routeText = rol === 'ADMIN' ? 'Vista Global Administrador' :
+                (rol === 'COBRADOR_1' ? 'Ruta Matagalpa (Carlos)' : 'Ruta Sébaco (Ana)');
+            document.getElementById('userRouteDisplay').textContent = `Ruta: ${routeText}`;
+            
+            if (appState.activeTab === 'clientes') renderizarListadoClientes();
+            if (appState.activeTab === 'scorecard') renderizarScorecard();
+            mostrarToast(`Rol cambiado a ${rol}`);
+        }
+
+        // CÁLCULO FINANCIERO STRICT REGULATED
+        function ejecutarSimulacionFinanciera() {
+            const principal = parseFloat(document.getElementById('simMontoInput').value) || 0;
+            
+            // Tramos de Comisión
+            let comision = 200;
+            if (principal >= 10000 && principal < 15000) comision = 400; // Exacto C$ 400 para 10k
+            else if (principal >= 15000 && principal < 25000) comision = 600;
+            else if (principal >= 25000 && principal < 50000) comision = 800;
+            else if (principal >= 50000) comision = 1200;
+
+            const financiado = principal + comision;
+            const interesTotal = financiado * 0.30;
+            const totalPagar = financiado + interesTotal;
+            const cuotaEfectiva = totalPagar / 40;
+
+            document.getElementById('simComisionVal').textContent = `C$ ${comision.toFixed(2)}`;
+            document.getElementById('simFinanciadoVal').textContent = `C$ ${financiado.toLocaleString('es-NI', {minimumFractionDigits:2})}`;
+            document.getElementById('simInteresVal').textContent = `C$ ${interesTotal.toLocaleString('es-NI', {minimumFractionDigits:2})}`;
+            document.getElementById('simTotalVal').textContent = `C$ ${totalPagar.toLocaleString('es-NI', {minimumFractionDigits:2})}`;
+            document.getElementById('simCuotaVal').textContent = `C$ ${cuotaEfectiva.toFixed(2)} /cuota`;
+        }
+
+        // RENDER SCORECARD & CHART.JS
+        function renderizarScorecard() {
+            let lista = appState.currentRole === 'ADMIN' ?
+                appState.clientes : appState.clientes.filter(c => c.cobradorId === appState.currentRole);
+
+            const totalMonto = lista.reduce((a, b) => a + b.saldoActual, 0);
+            document.getElementById('scBalanceTotal').textContent = `NIO ${totalMonto.toLocaleString('es-NI', {minimumFractionDigits:2})}`;
+            document.getElementById('scTotalRegs').textContent = lista.length;
+
+            const alCorriente = lista.filter(c => c.diasAtraso === 0);
+            const proximos = lista.filter(c => c.diasAtraso < 0 && c.diasAtraso >= -2);
+            const porVencer = lista.filter(c => c.diasAtraso < -2);
+            const vencidos = lista.filter(c => c.diasAtraso > 0 && c.diasAtraso <= 15);
+            const alerta = lista.filter(c => c.diasAtraso > 15);
+
+            const dataChart = [
+                alCorriente.reduce((a,b)=>a+b.saldoActual,0),
+                proximos.reduce((a,b)=>a+b.saldoActual,0),
+                porVencer.reduce((a,b)=>a+b.saldoActual,0),
+                vencidos.reduce((a,b)=>a+b.saldoActual,0),
+                alerta.reduce((a,b)=>a+b.saldoActual,0)
+            ];
+
+            // Render Chart.js
+            const ctx = document.getElementById('scorecardPieCanvas').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Al Corriente', 'Próximos', 'Por Vencer', 'Vencidos', 'Alerta'],
+                    datasets: [{
+                        data: dataChart.some(v => v > 0) ? dataChart : [1,1,1,1,1],
+                        backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#f97316', '#ef4444']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Table Breakdown
+            const tbody = document.getElementById('scTableBodyMarcadores');
+            tbody.innerHTML = '';
+
+            const rows = [
+                { nombre: 'Al Corriente', color: 'bg-blue-600', m: dataChart[0], reg: alCorriente.length },
+                { nombre: 'Próximos', color: 'bg-emerald-500', m: dataChart[1], reg: proximos.length },
+                { nombre: 'Por Vencer', color: 'bg-amber-500', m: dataChart[2], reg: porVencer.length },
+                { nombre: 'Vencidos', color: 'bg-orange-500', m: dataChart[3], reg: vencidos.length },
+                { nombre: 'Alerta', color: 'bg-rose-600', m: dataChart[4], reg: alerta.length }
+            ];
+
+            rows.forEach(r => {
+                const pct = totalMonto > 0 ? Math.round((r.m / totalMonto)*100) : 0;
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="p-1.5 flex items-center gap-1 font-semibold">
+                        <span class="w-2.5 h-2.5 ${r.color} rounded-full inline-block"></span> ${r.nombre}
+                    </td>
+                    <td class="p-1.5 text-right font-mono">${r.m.toLocaleString('es-NI')}</td>
+                    <td class="p-1.5 text-right font-bold">${pct}%</td>
+                    <td class="p-1.5 text-right font-bold">${r.reg}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Reporte Historico Transacciones
+            const containerTrans = document.getElementById('scTableBodyTransacciones');
+            containerTrans.innerHTML = `
+                <div class="p-2 flex justify-between"><span>Hoy</span><strong class="font-mono">C$ 0.00 / C$ 0.00</strong></div>
+                <div class="p-2 flex justify-between bg-slate-50"><span>Ayer</span><strong class="font-mono text-emerald-700">C$ 16,380.00 / C$ 16,075.00</strong></div>
+                <div class="p-2 flex justify-between"><span>Semana actual</span><strong class="font-mono text-emerald-700">C$ 16,380.00 / C$ 27,455.00</strong></div>
+                <div class="p-2 flex justify-between bg-slate-50"><span>Oct-2026</span><strong class="font-mono text-emerald-700">C$ 192,072.00 / C$ 280,310.00</strong></div>
+            `;
+        }
+
+        // RENDER CLIENTES
+        function renderizarListadoClientes() {
+            const container = document.getElementById('listaClientesContainer');
+            container.innerHTML = '';
+
+            const busqueda = (document.getElementById('inputBusquedaClientes').value || '').toLowerCase();
+            let lista = appState.currentRole === 'ADMIN' ?
+                appState.clientes : appState.clientes.filter(c => c.cobradorId === appState.currentRole);
+
+            lista = lista.filter(c => c.nombre.toLowerCase().includes(busqueda) || c.direccion.toLowerCase().includes(busqueda));
+
+            lista.forEach(c => {
+                let badgeHTML = '';
+                if (c.diasAtraso > 0) badgeHTML = `<span class="bg-rose-600 text-white font-bold text-[10px] px-1.5 py-0.5 rounded">${c.diasAtraso} Venc</span>`;
+                else badgeHTML = `<span class="bg-emerald-500 text-white font-bold text-[10px] px-1.5 py-0.5 rounded">${c.diasAtraso} Días</span>`;
+
+                const card = document.createElement('div');
+                card.className = "bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center cursor-pointer active:scale-98 transition-all";
+                card.onclick = () => {
+                    appState.selectedClientId = c.id;
+                    switchTab('balanceCliente');
+                };
+
+                card.innerHTML = `
+                    <div>
+                        <h4 class="font-bold text-slate-900 text-xs">${c.nombre}</h4>
+                        <p class="text-[11px] text-slate-400">${c.direccion}</p>
+                    </div>
+                    <div class="text-right">
+                        <strong class="text-slate-900 font-black text-xs block">NIO ${c.saldoActual.toLocaleString('es-NI')}</strong>
+                        <div class="mt-1 flex items-center justify-end gap-1">${badgeHTML}</div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // RENDER BALANCE CLIENTE (KARDEX)
+        function renderizarPantallaBalanceCliente() {
+            const c = appState.clientes.find(x => x.id === appState.selectedClientId);
+            if (!c) return;
+
+            document.getElementById('balNombreCliente').textContent = c.nombre;
+            document.getElementById('balPagoAcordado').textContent = `NIO ${c.cuotaPactada.toFixed(2)}`;
+            document.getElementById('balAgendadoFecha').textContent = c.fechaVenc;
+            document.getElementById('balSaldoTotal').textContent = `NIO ${c.saldoActual.toLocaleString('es-NI', {minimumFractionDigits:2})}`;
+
+            const containerT = document.getElementById('listaTransaccionesCliente');
+            containerT.innerHTML = '';
+
+            const txs = c.transacciones || [];
+            if (txs.length === 0) {
+                containerT.innerHTML = `<div class="p-3 text-center text-slate-400 italic">No hay movimientos registrados.</div>`;
+                return;
+            }
+
+            txs.forEach(t => {
+                const div = document.createElement('div');
+                div.className = "p-2.5 flex justify-between items-center hover:bg-slate-50";
+                div.innerHTML = `
+                    <div>
+                        <span class="font-bold text-slate-700 block">${t.fecha}</span>
+                        <span class="text-[10px] text-slate-400 uppercase">${t.tipo}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="font-mono font-bold ${t.monto < 0 ? 'text-emerald-600' : 'text-slate-900'} block">${t.monto.toFixed(2)}</span>
+                        <span class="text-[10px] text-slate-400">Saldo: NIO ${t.saldoResultante.toLocaleString('es-NI')}</span>
+                    </div>
+                `;
+                containerT.appendChild(div);
+            });
+        }
+
+        // ACCIONES RÁPIDAS
+        function accionLlamarCliente() {
+            const c = appState.clientes.find(x => x.id === appState.selectedClientId);
+            if (c && c.tel) window.location.href = `tel:${c.tel}`;
+        }
+
+        function accionWhatsAppCliente() {
+            const c = appState.clientes.find(x => x.id === appState.selectedClientId);
+            if (c && c.tel) {
+                const msg = encodeURIComponent(`Hola ${c.nombre}, le recordamos su cuota pactada de NIO ${c.cuotaPactada} para la fecha ${c.fechaVenc}. Saldo actual: NIO ${c.saldoActual}.`);
+                window.open(`https://wa.me/505${c.tel}?text=${msg}`, '_blank');
+            }
+        }
+
+        function accionSmartShare() {
+            const c = appState.clientes.find(x => x.id === appState.selectedClientId);
+            if (c && navigator.share) {
+                navigator.share({ title: 'Estado de Cuenta', text: `Cliente: ${c.nombre}\nSaldo: NIO ${c.saldoActual}` });
+            } else {
+                mostrarToast("Detalle copiado al portapapeles.");
+            }
+        }
+
+        function accionAbrirMapa() {
+            window.open("https://maps.google.com/?q=12.9254,-85.9172", '_blank');
+        }
+
+        function abrirModalReagendar() { abrirModal('modalReagendar'); }
+
+        function guardarReagenda() {
+            const f = document.getElementById('inputNuevaFecha').value;
+            if (!f) return;
+            const c = appState.clientes.find(x => x.id === appState.selectedClientId);
+            if (c) {
+                c.fechaVenc = f;
+                guardarEstadoLocal();
+                renderizarPantallaBalanceCliente();
+                cerrarModales();
+                mostrarToast("Nueva fecha agendada.");
+            }
+        }
+
+        function abrirModalAbonoDirecto(id) {
+            appState.selectedClientId = id;
+            const c = appState.clientes.find(x => x.id === id);
+            if (c) document.getElementById('inputMontoAbono').value = c.cuotaPactada;
+            abrirModal('modalAbono');
+        }
+
+        function confirmarAbono() {
+            const monto = parseFloat(document.getElementById('inputMontoAbono').value);
+            const c = appState.clientes.find(x => x.id === appState.selectedClientId);
+
+            if (!c || isNaN(monto) || monto <= 0) return;
+
+            c.saldoActual = Math.max(0, c.saldoActual - monto);
+            c.transacciones.unshift({
+                id: 'tx-' + Date.now(),
+                fecha: new Date().toLocaleDateString('es-NI'),
+                tipo: 'Pago',
+                monto: -monto,
+                saldoResultante: c.saldoActual
+            });
+
+            // Registrar en Cola Offline
+            appState.offlineQueue.push({ id: c.id, monto: monto, fecha: new Date().toISOString() });
+
+            guardarEstadoLocal();
+            cerrarModales();
+            renderizarPantallaBalanceCliente();
+            mostrarToast(`Abono registrado: C$ ${monto}`);
+            
+            // Auto abrir ticket de impresion
+            abrirModalVistaPreviaTicket(c.id);
+        }
+
+        // TICKET TÉRMICO 58mm ESC/POS MODELO PT210
+        function abrirModalVistaPreviaTicket(clientId) {
+            const c = appState.clientes.find(x => x.id === clientId);
+            if (!c) return;
+
+            const fechaStr = new Date().toLocaleString('es-NI');
+            
+            // Formatting exactly 32 Characters per line
+            const ticketText = 
+`================================
+     CREDITOS Y COBRANZAS       
+     MATAGALPA - NICARAGUA      
+================================
+RECIBO DE PAGO: #REC-${Math.floor(1000+Math.random()*9000)}
+FECHA: ${fechaStr}
+--------------------------------
+CLIENTE: ${padString(c.nombre, 23)}
+RUTA:    ${padString(c.cobradorId === 'COBRADOR_1' ? 'Matagalpa' : 'Sébaco', 23)}
+--------------------------------
+MONTO PAGADO:      NIO ${c.cuotaPactada.toFixed(2).padStart(8)}
+SALDO ANTERIOR:    NIO ${(c.saldoActual + c.cuotaPactada).toFixed(2).padStart(8)}
+NUEVO SALDO:       NIO ${c.saldoActual.toFixed(2).padStart(8)}
+--------------------------------
+PROXIMO PAGO:        ${c.fechaVenc}
+================================
+  ¡GRACIAS POR SU PAGO PUNTUAL! 
+  CONSERVE ESTE COMPROBANTE     
+                                
+                                `;
+
+            document.getElementById('ticketPreviewBox').textContent = ticketText;
+            abrirModal('modalImpresion');
+        }
+
+        async function conectarImpresoraBT() {
+            try {
+                if (!navigator.bluetooth) {
+                    mostrarToast("Navegador no soporta Bluetooth API.");
+                    return;
+                }
+
+                mostrarToast("Buscando impresora PT210...");
+                appState.btDevice = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
+                });
+
+                const server = await appState.btDevice.gatt.connect();
+                document.getElementById('printerStatus').textContent = "BT: PT210 Conectada";
+                mostrarToast("Impresora PT210 Conectada");
+            } catch (err) {
+                console.error(err);
+                mostrarToast("Error conexión Bluetooth.");
+            }
+        }
+
+        async function imprimirTicketBluetoothPT210() {
+            try {
+                const text = document.getElementById('ticketPreviewBox').textContent;
+                if (appState.btDevice && appState.btDevice.gatt.connected) {
+                    const service = await appState.btDevice.gatt.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
+                    const char = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
+                    const encoder = new TextEncoder();
+                    await char.writeValue(encoder.encode(text));
+                    mostrarToast("Imprimiendo en PT210...");
+                } else {
+                    window.print();
+                }
+            } catch (err) {
+                window.print();
+            }
+            cerrarModales();
+        }
+
+        // ADMIN PANEL REASIGNACIÓN
+        function renderizarAdminPanel() {
+            const container = document.getElementById('adminCarterasLista');
+            container.innerHTML = '';
+
+            appState.clientes.forEach(c => {
+                const div = document.createElement('div');
+                div.className = "p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex justify-between items-center";
+                div.innerHTML = `
+                    <div>
+                        <strong class="text-slate-800 block text-xs">${c.nombre}</strong>
+                        <span class="text-[10px] text-slate-400">Saldo: NIO ${c.saldoActual}</span>
+                    </div>
+                    <select onchange="reasignarCobrador('${c.id}', this.value)" class="bg-white border p-1 rounded font-bold text-[10px]">
+                        <option value="COBRADOR_1" ${c.cobradorId === 'COBRADOR_1' ? 'selected' : ''}>Carlos (Matagalpa)</option>
+                        <option value="COBRADOR_2" ${c.cobradorId === 'COBRADOR_2' ? 'selected' : ''}>Ana (Sébaco)</option>
+                    </select>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function reasignarCobrador(clientId, cobradorId) {
+            const c = appState.clientes.find(x => x.id === clientId);
+            if (c) {
+                c.cobradorId = cobradorId;
+                guardarEstadoLocal();
+                mostrarToast("Cliente reasignado de ruta.");
+            }
+        }
+
+        // UTILS
+        function abrirModalClienteNuevo() {
+            document.getElementById('cliId').value = '';
+            document.getElementById('cliNombre').value = '';
+            document.getElementById('cliTel').value = '';
+            document.getElementById('cliDireccion').value = '';
+            abrirModal('modalCliente');
+        }
+
+        function abrirModalClienteEditar(id) {
+            const c = appState.clientes.find(x => x.id === id);
+            if (!c) return;
+            document.getElementById('cliId').value = c.id;
+            document.getElementById('cliNombre').value = c.nombre;
+            document.getElementById('cliTel').value = c.tel;
+            document.getElementById('cliDireccion').value = c.direccion;
+            abrirModal('modalCliente');
+        }
+
+        function guardarClienteForm() {
+            const id = document.getElementById('cliId').value;
+            const nombre = document.getElementById('cliNombre').value;
+            const tel = document.getElementById('cliTel').value;
+            const dir = document.getElementById('cliDireccion').value;
+            const monto = parseFloat(document.getElementById('cliMontoBase').value) || 10000;
+            const cob = document.getElementById('cliCobradorSelect').value;
+
+            if (!nombre) return;
+
+            let comision = monto >= 10000 ? 400 : 200;
+            let financiado = monto + comision;
+            let totalPagar = financiado * 1.30;
+            let cuota = totalPagar / 40;
+
+            if (id) {
+                const c = appState.clientes.find(x => x.id === id);
+                if (c) { c.nombre = nombre; c.tel = tel; c.direccion = dir; }
+            } else {
+                appState.clientes.unshift({
+                    id: 'CL-' + Math.floor(200 + Math.random()*800),
+                    nombre: nombre, tel: tel, direccion: dir,
+                    montoOriginal: monto, saldoActual: totalPagar, cuotaPactada: cuota,
+                    fechaVenc: '30 oct 2026', diasAtraso: 0, cobradorId: cob,
+                    transacciones: []
+                });
+            }
+
+            guardarEstadoLocal();
+            cerrarModales();
+            switchTab('clientes');
+            mostrarToast("Cliente guardado.");
+        }
+
+        function exportarExcelCSV() {
+            let csv = "ID,Nombre,Telefono,Direccion,SaldoActual,Cuota\n";
+            appState.clientes.forEach(c => {
+                csv += `"${c.id}","${c.nombre}","${c.tel}","${c.direccion}",${c.saldoActual},${c.cuotaPactada}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Reporte_Cobranza_${new Date().toISOString().slice(0,10)}.csv`;
+            link.click();
+            mostrarToast("CSV exportado.");
+        }
+
+        function padString(str, len) {
+            return (str + '                            ').slice(0, len);
+        }
+
+        function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+        function abrirModal(id) {
+            const m = document.getElementById(id);
+            m.classList.remove('pointer-events-none', 'opacity-0');
+            m.classList.add('opacity-100');
+        }
+
+        function cerrarModales() {
+            document.querySelectorAll('.modal-transition').forEach(m => {
+                m.classList.add('opacity-0', 'pointer-events-none');
+                m.classList.remove('opacity-100');
+            });
+        }
+
+        function actualizarBannerSync() {
+            document.getElementById('syncCount').textContent = appState.offlineQueue.length;
+            if (appState.offlineQueue.length > 0) document.getElementById('syncBanner').classList.remove('hidden');
+            else document.getElementById('syncBanner').classList.add('hidden');
+        }
+
+        function fuerzaSincronizacion() {
+            appState.offlineQueue = [];
+            guardarEstadoLocal();
+            mostrarToast("Pagos sincronizados con el servidor.");
+        }
+
+        function mostrarToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = msg;
+            t.classList.remove('opacity-0', 'pointer-events-none');
+            t.classList.add('opacity-100');
+            setTimeout(() => t.classList.add('opacity-0', 'pointer-events-none'), 2500);
+        }
+    </script>
+</body>
+</html>
+```
