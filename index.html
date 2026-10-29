@@ -1,174 +1,953 @@
+```html
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CrediCobro Pro - Matagalpa</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        debt: {
+                            dark: '#0B0F19',
+                            card: 'rgba(17, 24, 39, 0.75)',
+                            border: 'rgba(255, 255, 255, 0.08)',
+                            orange: '#F97316',
+                            purple: '#8B5CF6',
+                            emerald: '#10B981',
+                            blue: '#3B82F6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        body { background-color: #0b0f19; color: #f3f4f6; }
-        .glass-card { background: rgba(17, 24, 39, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        body {
+            background-color: #0B0F19;
+            color: #F3F4F6;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .glass-card {
+            background: rgba(17, 24, 39, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-nav {
+            background: rgba(11, 15, 25, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .ticket-font {
+            font-family: 'Courier New', Courier, monospace;
+        }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(51, 65, 85, 0.8);
+            border-radius: 4px;
+        }
     </style>
 </head>
-<body class="pb-24 font-sans">
+<body class="pb-20 min-h-screen flex flex-col justify-between selection:bg-orange-500 selection:text-white">
 
-    <!-- PANTALLA DE LOGIN (INICIAL) -->
-    <div id="loginScreen" class="fixed inset-0 bg-gray-950 z-50 flex items-center justify-center p-4">
-        <div class="glass-card p-6 rounded-3xl w-full max-w-xs space-y-5 text-center">
-            <div class="w-16 h-16 bg-blue-600/20 text-blue-400 rounded-2xl flex items-center justify-center mx-auto border border-blue-500/30 text-2xl">
-                <i class="fa-solid fa-shield-halved"></i>
-            </div>
-            <div>
-                <h2 class="text-xl font-black text-white">CrediCobro Pro</h2>
-                <p class="text-xs text-gray-400">Sistema de Cobranza - Matagalpa</p>
-            </div>
-            <form onsubmit="ejecutarLogin(event)" class="space-y-3 text-left">
-                <div>
-                    <label class="text-[10px] text-gray-400 font-bold block mb-1">USUARIO</label>
-                    <input type="text" id="loginUser" value="admin" required class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-500">
+    <!-- BANNER DE NOTIFICACIONES TOAST -->
+    <div id="toastContainer" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-11/12 max-w-sm pointer-events-none flex flex-col gap-2"></div>
+
+    <!-- ==================== PANTALLA DE LOGIN (INICIAL) ==================== -->
+    <div id="loginScreen" class="fixed inset-0 z-50 bg-[#0B0F19] flex items-center justify-center p-4">
+        <div class="glass-card w-full max-w-sm p-6 rounded-3xl space-y-6 shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-12 -right-12 w-32 h-32 bg-orange-500/10 rounded-full blur-2xl"></div>
+            <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl"></div>
+
+            <div class="text-center space-y-2 relative z-10">
+                <div class="w-16 h-16 bg-gradient-to-tr from-orange-500 to-amber-400 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-orange-500/20 text-white text-2xl font-black">
+                    <i class="fa-solid fa-shield-halved"></i>
                 </div>
+                <h1 class="text-2xl font-black bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">CrediCobro Pro</h1>
+                <p class="text-xs text-slate-400">Sistema de Cobranza - Matagalpa, Nicaragua</p>
+            </div>
+
+            <form onsubmit="ejecutarLogin(event)" class="space-y-4 relative z-10">
                 <div>
-                    <label class="text-[10px] text-gray-400 font-bold block mb-1">CONTRASEÑA</label>
-                    <input type="password" id="loginPass" value="1234" required class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-500">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Usuario de Sistema</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-user absolute left-3 top-3 text-slate-500 text-xs"></i>
+                        <input type="text" id="loginUser" value="admin" required placeholder="Ej. admin" 
+                            class="w-full bg-slate-900/80 border border-slate-800 rounded-xl py-2.5 pl-9 pr-3 text-xs text-white outline-none focus:border-orange-500 transition">
+                    </div>
                 </div>
-                <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-xs py-3 rounded-xl shadow-lg transition">
-                    INICIAR SESIÓN
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Contraseña de Acceso</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-key absolute left-3 top-3 text-slate-500 text-xs"></i>
+                        <input type="password" id="loginPass" value="1234" required placeholder="••••••••" 
+                            class="w-full bg-slate-900/80 border border-slate-800 rounded-xl py-2.5 pl-9 pr-3 text-xs text-white outline-none focus:border-orange-500 transition">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs py-3 rounded-xl shadow-lg shadow-orange-500/20 active:scale-95 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i> INGRESAR AL SISTEMA
                 </button>
             </form>
-            <p class="text-[9px] text-gray-500">Demo: admin / 1234</p>
+
+            <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-800/80 text-[10px] text-slate-400 space-y-1">
+                <p class="font-bold text-slate-300">Credenciales Demo Disponibles:</p>
+                <div class="flex justify-between">
+                    <span>Admin: <strong class="text-white">admin / 1234</strong></span>
+                    <span>Analista: <strong class="text-white">analista / 1234</strong></span>
+                </div>
+                <p>Cobrador: <strong class="text-white">carlos / 1234</strong></p>
+            </div>
         </div>
     </div>
 
-    <!-- HEADER PRINCIPAL -->
-    <header class="bg-gray-900/90 border-b border-gray-800 p-4 sticky top-0 z-40 flex justify-between items-center backdrop-blur-md">
-        <div>
-            <h1 class="font-black text-lg bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent flex items-center gap-2">
-                <i class="fa-solid fa-wallet text-blue-500"></i> CrediCobro Pro
-            </h1>
-            <p class="text-[10px] text-gray-400" id="roleText">Usuario: Admin</p>
+    <!-- ==================== HEADER SUPERIOR PRINCIPAL ==================== -->
+    <header class="bg-[#0B0F19]/90 border-b border-slate-800/80 p-4 sticky top-0 z-40 backdrop-blur-md flex justify-between items-center max-w-md mx-auto w-full">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-orange-500/20 border border-orange-500/30 rounded-xl flex items-center justify-center text-orange-400 font-bold">
+                <i class="fa-solid fa-wallet text-sm"></i>
+            </div>
+            <div>
+                <h2 class="font-black text-sm bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent flex items-center gap-1.5">
+                    CrediCobro Pro <span class="text-[9px] bg-orange-500/20 text-orange-400 px-1.5 py-0.2 rounded font-bold border border-orange-500/30">v2.5</span>
+                </h2>
+                <p id="lblUsuarioHeader" class="text-[10px] text-slate-400">Sesión: Administrador</p>
+            </div>
         </div>
-        <button onclick="cerrarSesion()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs px-3 py-1.5 rounded-xl border border-gray-700 font-bold flex items-center gap-1">
-            <i class="fa-solid fa-right-from-bracket"></i> Salir
+
+        <button onclick="cerrarSesion()" class="bg-slate-900 border border-slate-800 text-slate-300 text-xs px-2.5 py-1.5 rounded-xl font-bold flex items-center gap-1.5 hover:bg-rose-500/20 hover:text-rose-400 hover:border-rose-500/30 transition">
+            <i class="fa-solid fa-power-off text-xs"></i>
         </button>
     </header>
 
-    <!-- BARRA NAVEGACIÓN INFERIOR -->
-    <nav class="bg-gray-900/95 border-t border-gray-800 fixed bottom-0 left-0 right-0 z-40 flex justify-around py-2.5 backdrop-blur-md">
-        <button onclick="switchTab('scorecard')" id="nav-scorecard" class="flex flex-col items-center text-blue-400 text-xs font-bold">
-            <i class="fa-solid fa-chart-pie text-base mb-0.5"></i> Scorecard
-        </button>
-        <button onclick="switchTab('clientes')" id="nav-clientes" class="flex flex-col items-center text-gray-400 text-xs font-bold">
-            <i class="fa-solid fa-users text-base mb-0.5"></i> Clientes
-        </button>
-        <button onclick="switchTab('personal')" id="nav-personal" class="flex flex-col items-center text-gray-400 text-xs font-bold">
-            <i class="fa-solid fa-id-card text-base mb-0.5"></i> Personal
-        </button>
-        <button onclick="switchTab('simulador')" id="nav-simulador" class="flex flex-col items-center text-gray-400 text-xs font-bold">
-            <i class="fa-solid fa-calculator text-base mb-0.5"></i> Simulador
-        </button>
-    </nav>
+    <!-- ==================== CONTENEDOR VISTAS PRINCIPALES ==================== -->
+    <main class="p-4 max-w-md mx-auto w-full space-y-4 flex-1">
 
-    <!-- CONTENEDOR VISTAS -->
-    <main class="p-4 max-w-md mx-auto space-y-4">
-
-        <!-- VISTA 1: SCORECARD -->
-        <section id="tab-scorecard" class="space-y-4">
-            <div class="glass-card p-4 rounded-2xl flex justify-between items-center">
-                <div>
-                    <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Cartera Total</span>
-                    <h2 class="text-xl font-black text-white" id="totalCarteraDisplay">NIO 738,991.00</h2>
+        <!-- PESTAÑA 1: SCORECARD GERENCIAL -->
+        <section id="tabScorecard" class="space-y-4">
+            <!-- CARTERA GLOBAL METRICAS -->
+            <div class="glass-card p-4 rounded-2xl relative overflow-hidden space-y-3">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Cartera Total Activa</span>
+                        <h3 id="lblCarteraTotal" class="text-2xl font-black text-white">C$ 738,991.00</h3>
+                    </div>
+                    <span class="bg-emerald-500/20 text-emerald-400 text-[10px] font-black px-2 py-1 rounded-lg border border-emerald-500/30">
+                        40 Cuotas Fijas
+                    </span>
                 </div>
-                <span class="bg-emerald-500/20 text-emerald-400 text-xs px-2.5 py-1 rounded-full border border-emerald-500/30 font-bold">40 Cuotas Fijas</span>
+
+                <div class="grid grid-cols-2 gap-2 text-xs pt-1">
+                    <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
+                        <span class="text-slate-400 text-[9px] font-bold uppercase block">Clientes Activos</span>
+                        <strong id="lblClientesContador" class="text-sm font-black text-white">2 Clientes</strong>
+                    </div>
+                    <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
+                        <span class="text-slate-400 text-[9px] font-bold uppercase block">Mora Proyectada</span>
+                        <strong class="text-sm font-black text-rose-400">14.2 %</strong>
+                    </div>
+                </div>
             </div>
+
+            <!-- GRAFICO DOUGHNUT CANVAS -->
             <div class="glass-card p-4 rounded-2xl space-y-3">
-                <h3 class="text-xs font-bold text-gray-300">Distribución de Cartera</h3>
-                <div class="relative w-40 h-40 mx-auto">
+                <div class="flex justify-between items-center">
+                    <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-chart-pie text-orange-400"></i> Distribución de Morosidad
+                    </h4>
+                    <span class="text-[10px] text-slate-500">Matagalpa Campo</span>
+                </div>
+                <div class="relative w-44 h-44 mx-auto">
                     <canvas id="scoreChart"></canvas>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-[10px] pt-2">
+                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Al Corriente (C$ 30.3k)</div>
+                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Próximos (C$ 13.9k)</div>
+                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Por Vencer (C$ 29.4k)</div>
+                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Alerta Roja (C$ 56.6k)</div>
                 </div>
             </div>
         </section>
 
-        <!-- VISTA 2: CLIENTES -->
-        <section id="tab-clientes" class="space-y-3 hidden">
+        <!-- PESTAÑA 2: CLIENTES & KARDEX -->
+        <section id="tabClientes" class="space-y-3 hidden">
+            <!-- ACCIONES Y BUSCADOR -->
             <div class="flex gap-2">
-                <input type="text" id="searchClientInput" oninput="filtrarClientes()" placeholder="Buscar cliente o cédula..." class="flex-1 bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs outline-none focus:border-blue-500 text-white">
-                <button onclick="abrirModalNuevoCliente()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-1">
-                    <i class="fa-solid fa-plus"></i> Nuevo
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-500 text-xs"></i>
+                    <input type="text" id="inputBuscarCliente" oninput="renderizarListadoClientes()" placeholder="Buscar cliente o cédula..." 
+                        class="w-full bg-slate-900 border border-slate-800 rounded-xl py-2 pl-9 pr-3 text-xs text-white outline-none focus:border-orange-500">
+                </div>
+                <button onclick="abrirModalNuevoCliente()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-3 py-2 rounded-xl flex items-center gap-1.5 shadow-lg shadow-orange-500/20 active:scale-95 transition">
+                    <i class="fa-solid fa-user-plus"></i> Nuevo
                 </button>
             </div>
 
+            <!-- CONTENEDOR TARJETAS DE CLIENTE -->
             <div id="listaClientesContainer" class="space-y-2">
-                <!-- Se renderiza por JS -->
+                <!-- Se inyecta dinámicamente -->
             </div>
         </section>
 
-        <!-- VISTA 3: PERSONAL / USUARIOS -->
-        <section id="tab-personal" class="space-y-4 hidden">
+        <!-- PESTAÑA 3: GESTIÓN DE PERSONAL Y USUARIOS -->
+        <section id="tabUsuarios" class="space-y-4 hidden">
             <div class="glass-card p-4 rounded-2xl space-y-3">
-                <h3 class="text-xs font-bold text-blue-400 uppercase tracking-wider"><i class="fa-solid fa-user-plus"></i> Registrar Usuario / Personal</h3>
-                <form onsubmit="guardarUsuario(event)" class="space-y-2 text-xs">
-                    <input type="text" id="usrNombre" placeholder="Nombre completo" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
-                    <input type="text" id="usrCedula" placeholder="Cédula (Ej: 441-120588-0003K)" required pattern="^[0-9]{3}-[0-9]{6}-[0-9]{4}[A-Za-z]$" title="Formato Nicaragua: 441-120588-0003K" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
-                    <input type="text" id="usrUser" placeholder="Nombre de Usuario (Login)" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
-                    <input type="password" id="usrPass" placeholder="Contraseña" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
-                    <div class="grid grid-cols-2 gap-2">
-                        <select id="usrRol" class="bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none">
-                            <option value="admin">Administrador</option>
-                            <option value="analista">Analista Crédito</option>
-                            <option value="cobrador">Cobrador</option>
-                        </select>
-                        <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg p-2.5 transition">
-                            Guardar Usuario
-                        </button>
+                <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                    <h3 class="text-xs font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-id-card-clip"></i> Registrar Personal de Sistema
+                    </h3>
+                    <span class="text-[10px] text-slate-500 font-mono">Formato NI</span>
+                </div>
+
+                <form onsubmit="guardarUsuarioForm(event)" class="space-y-2.5 text-xs">
+                    <input type="hidden" id="usrId">
+                    
+                    <div>
+                        <label class="block text-slate-400 text-[10px] font-bold mb-0.5">Nombre Completo*</label>
+                        <input type="text" id="usrNombre" required placeholder="Ej. Roberto González" 
+                            class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-orange-500">
                     </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-slate-400 text-[10px] font-bold mb-0.5">Cédula Nicaragüense*</label>
+                            <input type="text" id="usrCedula" required placeholder="441-120588-0003K" pattern="^[0-9]{3}-[0-9]{6}-[0-9]{4}[A-Za-z]$" title="Formato válido: 441-120588-0003K"
+                                class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 font-mono text-white outline-none focus:border-orange-500">
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 text-[10px] font-bold mb-0.5">Teléfono Móvil</label>
+                            <input type="text" id="usrTel" placeholder="88991122" 
+                                class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-orange-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-slate-400 text-[10px] font-bold mb-0.5">Usuario (Login)*</label>
+                            <input type="text" id="usrUser" required placeholder="rgonzalez" 
+                                class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-orange-500">
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 text-[10px] font-bold mb-0.5">Contraseña*</label>
+                            <input type="password" id="usrPass" required placeholder="••••••" 
+                                class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-orange-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-slate-400 text-[10px] font-bold mb-0.5">Rol de Cuenta*</label>
+                            <select id="usrRol" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-orange-500">
+                                <option value="admin">Administrador</option>
+                                <option value="analista">Analista Crédito</option>
+                                <option value="cobrador">Cobrador Campo</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 text-[10px] font-bold mb-0.5">Estado*</label>
+                            <select id="usrEstatus" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-orange-500">
+                                <option value="ACTIVO">ACTIVO</option>
+                                <option value="INACTIVO">INACTIVO</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-2.5 rounded-xl shadow-lg shadow-orange-500/20 active:scale-95 transition mt-2">
+                        <i class="fa-solid fa-floppy-disk mr-1"></i> GUARDAR PERSONAL
+                    </button>
                 </form>
             </div>
 
-            <!-- TABLA DE PERSONAL CREADO -->
-            <div class="glass-card p-4 rounded-2xl space-y-2">
-                <h4 class="text-xs font-bold text-gray-300">Personal Registrado</h4>
+            <!-- LISTADO DE USUARIOS REGISTRADOS -->
+            <div class="glass-card p-4 rounded-2xl space-y-3">
+                <div class="flex justify-between items-center">
+                    <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Personal Registrado</h4>
+                    <select id="filtroRolTabla" onchange="renderizarTablaUsuarios()" class="bg-slate-900 border border-slate-800 rounded-lg text-[10px] px-2 py-1 text-slate-300 outline-none">
+                        <option value="TODOS">Todos los roles</option>
+                        <option value="admin">Administradores</option>
+                        <option value="analista">Analistas</option>
+                        <option value="cobrador">Cobradores</option>
+                    </select>
+                </div>
+
                 <div id="listaUsuariosContainer" class="space-y-2 text-xs">
-                    <!-- Se renderiza por JS -->
+                    <!-- Dinámico -->
                 </div>
             </div>
         </section>
 
-        <!-- VISTA 4: SIMULADOR -->
-        <section id="tab-simulador" class="space-y-4 hidden">
-            <div class="glass-card p-4 rounded-2xl space-y-3">
-                <h3 class="text-xs font-bold text-purple-400 uppercase tracking-wider"><i class="fa-solid fa-calculator"></i> Simulador de Crédito</h3>
+        <!-- PESTAÑA 4: SIMULADOR FINANCIERO -->
+        <section id="tabSimulador" class="space-y-4 hidden">
+            <div class="glass-card p-4 rounded-2xl space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                    <h3 class="text-xs font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-calculator"></i> Simulador Financiero Oficial
+                    </h3>
+                    <span class="text-[10px] bg-purple-500/20 text-purple-300 font-bold px-2 py-0.5 rounded border border-purple-500/30">
+                        Escala 4% + 30% Int.
+                    </span>
+                </div>
+
                 <div>
-                    <label class="text-[10px] text-gray-400 font-bold block mb-1">Monto Solicitado (C$)</label>
-                    <input type="number" id="simMonto" value="10000" step="1000" oninput="calcularSimulacion()" class="w-full bg-gray-900 border border-purple-500/30 rounded-xl p-3 text-lg font-black text-purple-300 outline-none">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Monto Solicitado Principal (C$)</label>
+                    <input type="number" id="simMonto" value="10000" step="1000" oninput="calcularSimulacion()" 
+                        class="w-full bg-slate-900 border border-purple-500/40 rounded-xl p-3 text-xl font-black text-purple-300 outline-none focus:ring-2 focus:ring-purple-500">
                 </div>
+
+                <!-- DESGLOSE MATEMÁTICO -->
                 <div class="grid grid-cols-2 gap-2 text-xs">
-                    <div class="bg-gray-900/60 p-2.5 rounded-xl border border-gray-800">
-                        <span class="text-gray-400 block text-[10px]">Comisión Directa</span>
-                        <strong id="simComision" class="text-emerald-400">C$ 400.00</strong>
+                    <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                        <span class="text-slate-400 text-[10px] block">Comisión (4% / 10k)</span>
+                        <strong id="simComision" class="text-emerald-400 font-black text-sm">C$ 400.00</strong>
                     </div>
-                    <div class="bg-gray-900/60 p-2.5 rounded-xl border border-gray-800">
-                        <span class="text-gray-400 block text-[10px]">Monto Financiado</span>
-                        <strong id="simFinanciado" class="text-white">C$ 10,400.00</strong>
+                    <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                        <span class="text-slate-400 text-[10px] block">Monto Financiado</span>
+                        <strong id="simFinanciado" class="text-white font-black text-sm">C$ 10,400.00</strong>
                     </div>
-                    <div class="bg-gray-900/60 p-2.5 rounded-xl border border-gray-800">
-                        <span class="text-gray-400 block text-[10px]">Interés Total (30%)</span>
-                        <strong id="simInteres" class="text-white">C$ 3,120.00</strong>
+                    <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                        <span class="text-slate-400 text-[10px] block">Interés Total (30% / 2M)</span>
+                        <strong id="simInteres" class="text-white font-black text-sm">C$ 3,120.00</strong>
                     </div>
-                    <div class="bg-gray-900/60 p-2.5 rounded-xl border border-gray-800">
-                        <span class="text-gray-400 block text-[10px]">Total A Pagar</span>
-                        <strong id="simTotal" class="text-white">C$ 13,520.00</strong>
+                    <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                        <span class="text-slate-400 text-[10px] block">Total A Pagar</span>
+                        <strong id="simTotal" class="text-white font-black text-sm">C$ 13,520.00</strong>
                     </div>
                 </div>
-                <div class="bg-purple-900/30 border border-purple-500/40 p-3 rounded-xl text-center">
-                    <span class="text-[10px] text-purple-300 block font-bold">40 Cuotas Efectivas de:</span>
-                    <span id="simCuota" class="text-2xl font-black text-purple-200">C$ 338.00</span>
+
+                <div class="bg-purple-950/40 border border-purple-500/40 p-3.5 rounded-2xl text-center space-y-0.5">
+                    <span class="text-[10px] font-bold text-purple-300 uppercase block tracking-wider">40 Cuotas Efectivas Diarias</span>
+                    <span id="simCuota" class="text-3xl font-black text-purple-200">C$ 338.00</span>
                 </div>
             </div>
         </section>
 
     </main>
 
-    <!-- MODAL 1: CREAR NUEVO CLIENTE -->
-    <div id="modalNuevoCliente" class="fixed inset-0 bg-
+    <!-- ==================== NAVEGACIÓN INFERIOR PWA ==================== -->
+    <nav class="glass-nav fixed bottom-0 left-0 right-0 z-40 flex justify-around py-2 max-w-md mx-auto text-[10px] font-bold text-slate-400">
+        <button onclick="switchTab('scorecard')" id="nav-scorecard" class="flex flex-col items-center gap-1 text-orange-500">
+            <i class="fa-solid fa-chart-pie text-base"></i> Scorecard
+        </button>
+        <button onclick="switchTab('clientes')" id="nav-clientes" class="flex flex-col items-center gap-1">
+            <i class="fa-solid fa-users text-base"></i> Clientes
+        </button>
+        <button onclick="switchTab('usuarios')" id="nav-usuarios" class="flex flex-col items-center gap-1">
+            <i class="fa-solid fa-user-gear text-base"></i> Personal
+        </button>
+        <button onclick="switchTab('simulador')" id="nav-simulador" class="flex flex-col items-center gap-1">
+            <i class="fa-solid fa-calculator text-base"></i> Simulador
+        </button>
+    </nav>
+
+    <!-- ==================== MODAL 1: REGISTRAR CLIENTE ==================== -->
+    <div id="modalNuevoCliente" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="glass-card w-full max-w-xs rounded-2xl p-4 space-y-3">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <h3 class="text-xs font-bold text-orange-400 uppercase"><i class="fa-solid fa-user-plus mr-1"></i> Nuevo Crédito Cliente</h3>
+                <button onclick="cerrarModalNuevoCliente()" class="text-slate-400 font-bold text-base">&times;</button>
+            </div>
+            <form onsubmit="guardarNuevoCliente(event)" class="space-y-2 text-xs">
+                <div>
+                    <label class="block text-slate-400 text-[10px] font-bold mb-0.5">Nombre Completo*</label>
+                    <input type="text" id="cliNombre" required placeholder="Ej. MARÍA LÓPEZ PÉREZ" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-orange-500 uppercase">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-[10px] font-bold mb-0.5">Cédula de Nicaragua*</label>
+                    <input type="text" id="cliCedula" required placeholder="441-150885-0002Y" pattern="^[0-9]{3}-[0-9]{6}-[0-9]{4}[A-Za-z]$" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 font-mono text-white outline-none focus:border-orange-500">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-slate-400 text-[10px] font-bold mb-0.5">Teléfono</label>
+                        <input type="text" id="cliTel" placeholder="88223344" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-orange-500">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-[10px] font-bold mb-0.5">Monto Solic. (C$)*</label>
+                        <input type="number" id="cliMonto" value="10000" step="1000" required class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 font-bold text-purple-300 outline-none focus:border-orange-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-[10px] font-bold mb-0.5">Dirección / Comarca</label>
+                    <input type="text" id="cliDireccion" placeholder="Barrio Guanuca, Matagalpa" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-orange-500">
+                </div>
+                <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-2.5 rounded-xl shadow-lg shadow-orange-500/20 active:scale-95 transition mt-2">
+                    CREAR Y APROBAR CRÉDITO
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL 2: KARDEX Y APLICADOR DE ABONOS ==================== -->
+    <div id="modalKardex" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="glass-card w-full max-w-sm rounded-2xl p-4 space-y-3 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-start border-b border-slate-800 pb-2">
+                <div>
+                    <h3 id="kdNombre" class="text-xs font-black text-white uppercase">NOMBRE CLIENTE</h3>
+                    <p id="kdCedula" class="text-[10px] text-slate-400 font-mono">Cédula: ---</p>
+                </div>
+                <button onclick="cerrarKardex()" class="text-slate-400 font-bold text-base">&times;</button>
+            </div>
+
+            <!-- BOTONES RÁPIDOS ACCIÓN COMPLEMENTARIOS -->
+            <div class="grid grid-cols-4 gap-1.5 text-[10px] text-center">
+                <a id="btnKdLlamar" href="#" class="bg-slate-900 border border-slate-800 p-2 rounded-xl text-blue-400 font-bold flex flex-col items-center gap-0.5">
+                    <i class="fa-solid fa-phone"></i> Llamar
+                </a>
+                <a id="btnKdWs" href="#" target="_blank" class="bg-slate-900 border border-slate-800 p-2 rounded-xl text-emerald-400 font-bold flex flex-col items-center gap-0.5">
+                    <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                </a>
+                <a id="btnKdGps" href="#" target="_blank" class="bg-slate-900 border border-slate-800 p-2 rounded-xl text-amber-400 font-bold flex flex-col items-center gap-0.5">
+                    <i class="fa-solid fa-location-dot"></i> GPS Mapa
+                </a>
+                <button onclick="abrirModalTicketPT210()" class="bg-slate-900 border border-slate-800 p-2 rounded-xl text-orange-400 font-bold flex flex-col items-center gap-0.5">
+                    <i class="fa-solid fa-print"></i> Ticket PT210
+                </button>
+            </div>
+
+            <!-- RESUMEN DE SALDO -->
+            <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 flex justify-between items-center">
+                <div>
+                    <span class="text-[9px] text-slate-400 block font-bold uppercase">Saldo Insoluto Pendiente</span>
+                    <strong id="kdSaldo" class="text-lg font-black text-blue-400">C$ 0.00</strong>
+                </div>
+                <div class="text-right">
+                    <span class="text-[9px] text-slate-400 block font-bold uppercase">Cuota Fija Diaria</span>
+                    <strong id="kdCuotaValor" class="text-xs font-black text-emerald-400">C$ 0.00</strong>
+                </div>
+            </div>
+
+            <!-- FORMULARIO APLICACIÓN ABONOS -->
+            <div class="bg-emerald-950/30 border border-emerald-500/30 p-3 rounded-xl space-y-2">
+                <span class="text-[10px] font-bold text-emerald-300 block uppercase tracking-wider">
+                    <i class="fa-solid fa-cash-register mr-1"></i> Aplicar Abono a Cuenta
+                </span>
+                <div class="flex gap-2">
+                    <input type="number" id="inputAbonoMonto" placeholder="Monto C$" class="flex-1 bg-slate-900 border border-slate-800 p-2 rounded-xl text-xs text-white font-bold outline-none focus:border-emerald-500">
+                    <button onclick="aplicarAbono()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-black px-4 py-2 rounded-xl text-xs shadow-md active:scale-95 transition">
+                        Cobrar
+                    </button>
+                </div>
+                <button onclick="aplicarCuotaCompleta()" class="w-full bg-slate-900 hover:bg-slate-800 text-emerald-400 font-bold py-1.5 rounded-xl text-[10px] border border-emerald-500/20">
+                    + Cargar Cuota Exacta Diaria
+                </button>
+            </div>
+
+            <!-- HISTORIAL DE ABONOS -->
+            <div class="space-y-1">
+                <h4 class="text-[10px] font-bold text-slate-400 uppercase">Historial de Transacciones</h4>
+                <div id="kdHistorial" class="space-y-1 text-[10px] max-h-36 overflow-y-auto pr-1">
+                    <!-- Dinámico -->
+                </div>
+            </div>
+
+            <button onclick="cerrarKardex()" class="w-full bg-slate-900 text-slate-300 text-xs py-2 rounded-xl font-bold">Cerrar Kardex</button>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL 3: IMPRESIÓN TÉRMICA PT210 ==================== -->
+    <div id="modalTicketPT210" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="glass-card w-full max-w-xs rounded-2xl p-4 space-y-3">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <h3 class="text-xs font-bold text-orange-400 uppercase"><i class="fa-solid fa-print mr-1"></i> Ticket PT210 (58mm - 32 Char)</h3>
+                <button onclick="cerrarTicketPT210()" class="text-slate-400 font-bold text-base">&times;</button>
+            </div>
+
+            <pre id="ticketPreviewBox" class="ticket-font bg-slate-950 text-emerald-400 text-[10px] p-3 rounded-xl leading-tight border border-slate-800 overflow-x-auto select-all">
+================================
+     CREDICOBRO PRO MATAGALPA   
+    COBRANZA OFICIAL DE CAMPO   
+================================
+RECIBO DE PAGO:  #REC-20261028
+FECHA:           28/10/2026 20:41
+--------------------------------
+CLIENTE: JANETJ CANO MARTINEZ
+CEDULA:  441-220490-0012L
+GESTOR:  Carlos Mendoza
+--------------------------------
+MONTO RECIBIDO:     C$    338.00
+SALDO ANTERIOR:     C$ 10,498.00
+NUEVO SALDO:        C$ 10,160.00
+--------------------------------
+    ¡GRACIAS POR SU PAGO!
+================================
+            </pre>
+
+            <div class="flex gap-2">
+                <button onclick="imprimirWebBluetooth()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black text-xs py-2.5 rounded-xl shadow-lg shadow-orange-500/20 active:scale-95 transition flex items-center justify-center gap-1.5">
+                    <i class="fa-brands fa-bluetooth-b"></i> Enviar PT210
+                </button>
+                <button onclick="copiarTicketTexto()" class="bg-slate-900 text-slate-300 font-bold text-xs px-3 py-2.5 rounded-xl border border-slate-800">
+                    <i class="fa-regular fa-copy"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== LÓGICA JAVASCRIPT ==================== -->
+    <script>
+        // DATASET INICIAL PERSISTENTE
+        const USUARIOS_INICIALES = [
+            { id: 1, nombre: 'Administrador General', user: 'admin', pass: '1234', rol: 'admin', cedula: '441-120588-0003K', tel: '88991122', estatus: 'ACTIVO' },
+            { id: 2, nombre: 'Elena Rostrán', user: 'analista', pass: '1234', rol: 'analista', cedula: '441-200392-0005F', tel: '88776655', estatus: 'ACTIVO' },
+            { id: 3, nombre: 'Carlos Mendoza', user: 'carlos', pass: '1234', rol: 'cobrador', cedula: '441-101090-0015L', tel: '88334455', estatus: 'ACTIVO' }
+        ];
+
+        const CLIENTES_INICIALES = [
+            { id: 101, nombre: 'JANETJ CANO MARTINEZ', cedula: '441-220490-0012L', telefono: '88229900', direccion: 'Barrio Molino Sur', principal: 10000, saldo: 13520, cuota: 338, cobrador: 'carlos', historial: [] },
+            { id: 102, nombre: 'ABRAHAM DIONISIO ARAUZ', cedula: '441-120588-0003K', telefono: '88113344', direccion: 'Mercado Guanuca', principal: 20000, saldo: 27040, cuota: 676, cobrador: 'carlos', historial: [] }
+        ];
+
+        let appState = {
+            usuarios: [],
+            clientes: [],
+            usuarioLogueado: null,
+            clienteActivo: null,
+            activeTab: 'scorecard'
+        };
+
+        // EVENTO CARGA
+        window.onload = function() {
+            cargarStorage();
+            calcularSimulacion();
+            initScoreChart();
+        };
+
+        function cargarStorage() {
+            const u = localStorage.getItem('ccp_usuarios');
+            const c = localStorage.getItem('ccp_clientes');
+            appState.usuarios = u ? JSON.parse(u) : USUARIOS_INICIALES;
+            appState.clientes = c ? JSON.parse(c) : CLIENTES_INICIALES;
+            guardarStorage();
+        }
+
+        function guardarStorage() {
+            localStorage.setItem('ccp_usuarios', JSON.stringify(appState.usuarios));
+            localStorage.setItem('ccp_clientes', JSON.stringify(appState.clientes));
+        }
+
+        // SISTEMA DE TOAST
+        function mostrarToast(msg, tipo = 'info') {
+            const cont = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `p-3 rounded-xl text-xs font-bold text-white shadow-xl flex items-center gap-2 transition duration-300 pointer-events-auto ${tipo === 'error' ? 'bg-rose-600' : 'bg-emerald-600'}`;
+            toast.innerHTML = `<i class="fa-solid ${tipo === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-check'}"></i> ${msg}`;
+            cont.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+
+        // LOGIN / LOGOUT
+        function ejecutarLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('loginUser').value.trim();
+            const p = document.getElementById('loginPass').value.trim();
+
+            const encontrado = appState.usuarios.find(x => x.user.toLowerCase() === u.toLowerCase() && x.pass === p && x.estatus === 'ACTIVO');
+
+            if (encontrado) {
+                appState.usuarioLogueado = encontrado;
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('lblUsuarioHeader').innerText = `Sesión: ${encontrado.nombre} (${encontrado.rol.toUpperCase()})`;
+                renderizarListadoClientes();
+                renderizarTablaUsuarios();
+                actualizarMetricasScorecard();
+                mostrarToast(`Bienvenido, ${encontrado.nombre}`);
+            } else {
+                mostrarToast('Usuario/contraseña inválidos o cuenta inactiva', 'error');
+            }
+        }
+
+        function cerrarSesion() {
+            appState.usuarioLogueado = null;
+            document.getElementById('loginScreen').classList.remove('hidden');
+        }
+
+        // NAVEGACIÓN ENTRE PESTAÑAS
+        function switchTab(tab) {
+            appState.activeTab = tab;
+            ['scorecard', 'clientes', 'usuarios', 'simulador'].forEach(t => {
+                const sec = document.getElementById('tab' + capitalize(t));
+                const btn = document.getElementById('nav-' + t);
+                if (sec) sec.classList.add('hidden');
+                if (btn) {
+                    btn.classList.remove('text-orange-500');
+                    btn.classList.add('text-slate-400');
+                }
+            });
+
+            const actSec = document.getElementById('tab' + capitalize(tab));
+            const actBtn = document.getElementById('nav-' + tab);
+            if (actSec) actSec.classList.remove('hidden');
+            if (actBtn) {
+                actBtn.classList.remove('text-slate-400');
+                actBtn.classList.add('text-orange-500');
+            }
+
+            if (tab === 'scorecard') {
+                actualizarMetricasScorecard();
+                initScoreChart();
+            }
+            if (tab === 'clientes') renderizarListadoClientes();
+            if (tab === 'usuarios') renderizarTablaUsuarios();
+        }
+
+        function capitalize(s) {
+            return s.charAt(0).toUpperCase() + s.slice(1);
+        }
+
+        // METRICAS SCORECARD
+        function actualizarMetricasScorecard() {
+            const total = appState.clientes.reduce((acc, c) => acc + c.saldo, 0);
+            document.getElementById('lblCarteraTotal').innerText = `C$ ${total.toLocaleString('es-NI', {minimumFractionDigits: 2})}`;
+            document.getElementById('lblClientesContador').innerText = `${appState.clientes.length} Clientes`;
+        }
+
+        // SIMULADOR FINANCIERO CORREGIDO (Escala 4% + 30% Int)
+        function calcularSimulacion() {
+            const p = parseFloat(document.getElementById('simMonto').value) || 0;
+            
+            // Regla oficial: C$ 400 por cada C$ 10,000 de principal (4%)
+            let com = (p / 10000) * 400;
+            if (p > 0 && p < 4000) com = 100; // Piso mínimo si aplica
+
+            const fin = p + com;
+            const int = fin * 0.30; // 30% a 2 meses
+            const tot = fin + int;
+            const cuo = tot / 40; // 40 cuotas efectivas
+
+            document.getElementById('simComision').innerText = `C$ ${com.toFixed(2)}`;
+            document.getElementById('simFinanciado').innerText = `C$ ${fin.toFixed(2)}`;
+            document.getElementById('simInteres').innerText = `C$ ${int.toFixed(2)}`;
+            document.getElementById('simTotal').innerText = `C$ ${tot.toFixed(2)}`;
+            document.getElementById('simCuota').innerText = `C$ ${cuo.toFixed(2)}`;
+        }
+
+        // GESTIÓN DE CLIENTES
+        function renderizarListadoClientes() {
+            const cont = document.getElementById('listaClientesContainer');
+            const q = (document.getElementById('inputBuscarCliente').value || '').toLowerCase();
+
+            const filtrados = appState.clientes.filter(c => c.nombre.toLowerCase().includes(q) || c.cedula.toLowerCase().includes(q));
+
+            if (filtrados.length === 0) {
+                cont.innerHTML = `<div class="text-center p-4 text-xs text-slate-500">No hay clientes encontrados.</div>`;
+                return;
+            }
+
+            cont.innerHTML = filtrados.map(c => `
+                <div onclick="abrirKardex(${c.id})" class="glass-card p-3 rounded-2xl flex justify-between items-center cursor-pointer hover:bg-slate-800/80 transition active:scale-98">
+                    <div class="space-y-0.5">
+                        <h4 class="font-bold text-xs text-white uppercase">${c.nombre}</h4>
+                        <p class="text-[10px] text-slate-400 font-mono">Ced: ${c.cedula}</p>
+                        <p class="text-[9px] text-slate-500"><i class="fa-solid fa-location-dot text-amber-500/80 mr-1"></i>${c.direccion || 'Matagalpa'}</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs font-black text-blue-400 block">C$ ${c.saldo.toLocaleString('es-NI', {minimumFractionDigits: 2})}</span>
+                        <span class="text-[9px] bg-emerald-500/20 text-emerald-300 font-bold px-1.5 py-0.5 rounded border border-emerald-500/30">
+                            Cuota: C$ ${c.cuota.toFixed(2)}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function abrirModalNuevoCliente() {
+            document.getElementById('modalNuevoCliente').classList.remove('hidden');
+        }
+        function cerrarModalNuevoCliente() {
+            document.getElementById('modalNuevoCliente').classList.add('hidden');
+        }
+
+        function guardarNuevoCliente(e) {
+            e.preventDefault();
+            const p = parseFloat(document.getElementById('cliMonto').value);
+            const com = (p / 10000) * 400;
+            const fin = p + com;
+            const tot = fin + (fin * 0.30);
+            const cuo = tot / 40;
+
+            const nuevo = {
+                id: Date.now(),
+                nombre: document.getElementById('cliNombre').value.trim().toUpperCase(),
+                cedula: document.getElementById('cliCedula').value.trim(),
+                telefono: document.getElementById('cliTel').value.trim(),
+                direccion: document.getElementById('cliDireccion').value.trim(),
+                principal: p,
+                saldo: tot,
+                cuota: cuo,
+                cobrador: 'carlos',
+                historial: []
+            };
+
+            appState.clientes.push(nuevo);
+            guardarStorage();
+            renderizarListadoClientes();
+            actualizarMetricasScorecard();
+            cerrarModalNuevoCliente();
+            mostrarToast('Cliente y crédito registrados correctamente');
+        }
+
+        // KARDEX OPERATIVO Y APLICADOR DE ABONOS
+        function abrirKardex(id) {
+            appState.clienteActivo = appState.clientes.find(c => c.id === id);
+            if (!appState.clienteActivo) return;
+
+            const c = appState.clienteActivo;
+            document.getElementById('kdNombre').innerText = c.nombre;
+            document.getElementById('kdCedula').innerText = `Cédula: ${c.cedula}`;
+            document.getElementById('kdSaldo').innerText = `C$ ${c.saldo.toLocaleString('es-NI', {minimumFractionDigits: 2})}`;
+            document.getElementById('kdCuotaValor').innerText = `C$ ${c.cuota.toFixed(2)}`;
+
+            // Configurar botones de acción inteligente
+            document.getElementById('btnKdLlamar').href = `tel:${c.telefono || ''}`;
+            document.getElementById('btnKdWs').href = `https://wa.me/505${c.telefono}?text=Hola%20${encodeURIComponent(c.nombre)},%20le%20saludamos%20de%20CrediCobro%20Pro%20recordandole%20su%20cuota%20pendiente.`;
+            document.getElementById('btnKdGps').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.direccion + ' Matagalpa Nicaragua')}`;
+
+            renderHistorialKardex();
+            document.getElementById('modalKardex').classList.remove('hidden');
+        }
+
+        function cerrarKardex() {
+            document.getElementById('modalKardex').classList.add('hidden');
+        }
+
+        function aplicarAbono() {
+            const input = document.getElementById('inputAbonoMonto');
+            const m = parseFloat(input.value);
+            if (!m || m <= 0) return mostrarToast('Ingrese un monto válido', 'error');
+
+            const c = appState.clienteActivo;
+            const saldoAnt = c.saldo;
+            c.saldo -= m;
+            if (c.saldo < 0) c.saldo = 0;
+
+            const transaccion = {
+                id: 'REC-' + Date.now(),
+                fecha: new Date().toLocaleString('es-NI'),
+                monto: m,
+                saldoAnt: saldoAnt,
+                saldoNuevo: c.saldo,
+                gestor: appState.usuarioLogueado ? appState.usuarioLogueado.nombre : 'Gestor Campo'
+            };
+
+            c.historial.unshift(transaccion);
+            guardarStorage();
+
+            document.getElementById('kdSaldo').innerText = `C$ ${c.saldo.toLocaleString('es-NI', {minimumFractionDigits: 2})}`;
+            input.value = '';
+
+            renderHistorialKardex();
+            renderizarListadoClientes();
+            actualizarMetricasScorecard();
+            actualizarTicketPreviewBox(c, transaccion);
+            mostrarToast(`Abono de C$ ${m.toFixed(2)} procesado`);
+        }
+
+        function aplicarCuotaCompleta() {
+            if (!appState.clienteActivo) return;
+            document.getElementById('inputAbonoMonto').value = appState.clienteActivo.cuota.toFixed(2);
+            aplicarAbono();
+        }
+
+        function renderHistorialKardex() {
+            const cont = document.getElementById('kdHistorial');
+            const list = appState.clienteActivo.historial || [];
+
+            if (list.length === 0) {
+                cont.innerHTML = `<span class="text-slate-500 italic block text-center py-2">Sin abonos registrados</span>`;
+                return;
+            }
+
+            cont.innerHTML = list.map(h => `
+                <div class="bg-slate-900/60 p-2 rounded-xl border border-slate-800 flex justify-between items-center">
+                    <div>
+                        <span class="text-slate-300 font-bold block">${h.fecha}</span>
+                        <span class="text-[8px] text-slate-500">Gestor: ${h.gestor}</span>
+                    </div>
+                    <div class="text-right">
+                        <strong class="text-emerald-400 font-black text-xs">- C$ ${h.monto.toFixed(2)}</strong>
+                        <span class="text-[8px] text-slate-400 block">Saldo: C$ ${h.saldoNuevo.toFixed(2)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // GESTIÓN DE PERSONAL / USUARIOS
+        function renderizarTablaUsuarios() {
+            const cont = document.getElementById('listaUsuariosContainer');
+            const filtro = document.getElementById('filtroRolTabla').value;
+
+            let list = appState.usuarios || [];
+            if (filtro !== 'TODOS') list = list.filter(u => u.rol === filtro);
+
+            cont.innerHTML = list.map(u => `
+                <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center">
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <strong class="text-white font-bold">${u.nombre}</strong>
+                            <span class="text-[8px] uppercase px-1.5 py-0.2 rounded font-black ${u.estatus === 'ACTIVO' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}">${u.estatus}</span>
+                        </div>
+                        <p class="text-[9px] text-slate-400 font-mono">User: ${u.user} | Ced: ${u.cedula}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[9px] uppercase px-2 py-0.5 rounded font-bold ${u.rol === 'admin' ? 'bg-purple-500/20 text-purple-300' : 'bg-blue-500/20 text-blue-300'}">${u.rol}</span>
+                        <button onclick="editarUsuarioForm(${u.id})" class="text-slate-400 hover:text-orange-400 text-xs"><i class="fa-solid fa-pen"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function guardarUsuarioForm(e) {
+            e.preventDefault();
+            const id = document.getElementById('usrId').value;
+            const nombre = document.getElementById('usrNombre').value.trim();
+            const cedula = document.getElementById('usrCedula').value.trim();
+            const tel = document.getElementById('usrTel').value.trim();
+            const user = document.getElementById('usrUser').value.trim();
+            const pass = document.getElementById('usrPass').value.trim();
+            const rol = document.getElementById('usrRol').value;
+            const estatus = document.getElementById('usrEstatus').value;
+
+            if (id) {
+                const u = appState.usuarios.find(x => x.id == id);
+                if (u) {
+                    u.nombre = nombre; u.cedula = cedula; u.tel = tel;
+                    u.user = user; u.pass = pass; u.rol = rol; u.estatus = estatus;
+                }
+            } else {
+                appState.usuarios.push({
+                    id: Date.now(), nombre, cedula, tel, user, pass, rol, estatus
+                });
+            }
+
+            guardarStorage();
+            renderizarTablaUsuarios();
+            e.target.reset();
+            document.getElementById('usrId').value = '';
+            mostrarToast('Personal registrado/actualizado');
+        }
+
+        function editarUsuarioForm(id) {
+            const u = appState.usuarios.find(x => x.id == id);
+            if (!u) return;
+            document.getElementById('usrId').value = u.id;
+            document.getElementById('usrNombre').value = u.nombre;
+            document.getElementById('usrCedula').value = u.cedula;
+            document.getElementById('usrTel').value = u.tel || '';
+            document.getElementById('usrUser').value = u.user;
+            document.getElementById('usrPass').value = u.pass;
+            document.getElementById('usrRol').value = u.rol;
+            document.getElementById('usrEstatus').value = u.estatus;
+        }
+
+        // TICKET TÉRMICO PT210 Y BLUETOOTH
+        function abrirModalTicketPT210() {
+            if (!appState.clienteActivo) return;
+            const c = appState.clienteActivo;
+            const ult = (c.historial && c.historial[0]) ? c.historial[0] : {
+                monto: 0, saldoAnt: c.saldo, saldoNuevo: c.saldo, fecha: new Date().toLocaleString('es-NI'), gestor: 'Campo'
+            };
+            actualizarTicketPreviewBox(c, ult);
+            document.getElementById('modalTicketPT210').classList.remove('hidden');
+        }
+
+        function cerrarTicketPT210() {
+            document.getElementById('modalTicketPT210').classList.add('hidden');
+        }
+
+        function actualizarTicketPreviewBox(cliente, tx) {
+            const pad = (s, len) => (s + '                            ').slice(0, len);
+            const padRight = (s, len) => ('                            ' + s).slice(-len);
+
+            const txt = 
+`================================
+     CREDICOBRO PRO MATAGALPA   
+    COBRANZA OFICIAL DE CAMPO   
+================================
+RECIBO DE PAGO:  #REC-${Date.now().toString().slice(-6)}
+FECHA:           ${tx.fecha || new Date().toLocaleDateString()}
+--------------------------------
+CLIENTE: ${pad(cliente.nombre, 23)}
+CEDULA:  ${pad(cliente.cedula, 23)}
+GESTOR:  ${pad(tx.gestor || 'Carlos Mendoza', 23)}
+--------------------------------
+MONTO RECIBIDO:     C$ ${padRight((tx.monto || 0).toFixed(2), 10)}
+SALDO ANTERIOR:     C$ ${padRight((tx.saldoAnt || 0).toFixed(2), 10)}
+NUEVO SALDO:        C$ ${padRight((tx.saldoNuevo || 0).toFixed(2), 10)}
+--------------------------------
+    ¡GRACIAS POR SU PAGO!
+================================`;
+            const box = document.getElementById('ticketPreviewBox');
+            if (box) box.innerText = txt;
+        }
+
+        function copiarTicketTexto() {
+            const txt = document.getElementById('ticketPreviewBox').innerText;
+            navigator.clipboard.writeText(txt).then(() => {
+                mostrarToast('Ticket copiado al portapapeles');
+            });
+        }
+
+        async function imprimirWebBluetooth() {
+            mostrarToast('Buscando impresora PT210...');
+            try {
+                const device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2']
+                });
+                mostrarToast(`Conectando a ${device.name}...`);
+            } catch (err) {
+                mostrarToast('Impresión enviada a cola térmica demo');
+            }
+        }
+
+        // CHARTS
+        let scoreChart;
+        function initScoreChart() {
+            const ctx = document.getElementById('scoreChart');
+            if (!ctx) return;
+            if (scoreChart) scoreChart.destroy();
+
+            scoreChart = new Chart(ctx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Al Corriente', 'Próximos', 'Por Vencer', 'Alerta'],
+                    datasets: [{
+                        data: [30340, 13990, 29423, 56697],
+                        backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    cutout: '72%'
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+```
