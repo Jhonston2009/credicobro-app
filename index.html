@@ -31,11 +31,11 @@
             <form onsubmit="ejecutarLogin(event)" class="space-y-3 text-left">
                 <div>
                     <label class="text-[10px] text-gray-400 font-bold block mb-1 uppercase tracking-wider">Usuario</label>
-                    <input type="text" id="loginUser" required class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-500 transition">
+                    <input type="text" id="loginUser" value="admin" required class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-500 transition">
                 </div>
                 <div>
                     <label class="text-[10px] text-gray-400 font-bold block mb-1 uppercase tracking-wider">Contraseña</label>
-                    <input type="password" id="loginPass" required class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-500 transition">
+                    <input type="password" id="loginPass" value="4321" required class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-500 transition">
                 </div>
                 <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-xs py-3 rounded-xl shadow-lg transition active:scale-95">
                     INICIAR SESIÓN
@@ -302,10 +302,10 @@ NUEVO SALDO:           C$ 0.00
         // SISTEMA DE AUTENTICACIÓN
         function ejecutarLogin(e) {
             e.preventDefault();
-            let u = document.getElementById('loginUser').value;
-            let p = document.getElementById('loginPass').value;
+            let u = document.getElementById('loginUser').value.trim();
+            let p = document.getElementById('loginPass').value.trim();
 
-            let en = usuarios.find(x => x.user === u && x.pass === p);
+            let en = usuarios.find(x => x.user.toLowerCase() === u.toLowerCase() && x.pass === p);
             if(en) {
                 usuarioLogueado = en;
                 document.getElementById('loginScreen').classList.add('hidden');
@@ -322,14 +322,14 @@ NUEVO SALDO:           C$ 0.00
                 renderUsuarios();
                 initChart();
             } else {
-                alert('Usuario o contraseña incorrectos.');
+                alert('Usuario o contraseña incorrectos. Verifique sus datos.');
             }
         }
 
         function cerrarSesion() {
             usuarioLogueado = null;
-            document.getElementById('loginUser').value = '';
-            document.getElementById('loginPass').value = '';
+            document.getElementById('loginUser').value = 'admin';
+            document.getElementById('loginPass').value = '1234';
             document.getElementById('loginScreen').classList.remove('hidden');
             switchTab('scorecard');
         }
@@ -433,7 +433,9 @@ NUEVO SALDO:           C$ 0.00
             document.getElementById('kdSaldo').innerText = `C$ ${clienteActivo.saldo.toFixed(2)}`;
             document.getElementById('kdCuotaValor').innerText = `C$ ${clienteActivo.cuota.toFixed(2)}`;
             
-            document.getElementById('btnLlamar').href = `tel:${clienteActivo.telefono}`; document.getElementById('btnWhatsapp').href = `https://wa.me/505${clienteActivo.telefono}?text=Hola%20${encodeURIComponent(clienteActivo.nombre)},\%20le\%20recordamos\%20su\%20pago\%20pendiente.`; document.getElementById('btnMapa').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clienteActivo.direccion + ', Matagalpa')}`;
+            document.getElementById('btnLlamar').href = `tel:${clienteActivo.telefono}`;
+            document.getElementById('btnWhatsapp').href = `https://wa.me/505${clienteActivo.telefono}?text=Hola%20${encodeURIComponent(clienteActivo.nombre)},%20le%20recordamos%20su%20pago%20pendiente.`;
+            document.getElementById('btnMapa').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clienteActivo.direccion + ', Matagalpa')}`;
 
             actualizarTicketPreview(0);
             renderHistorialKardex();
@@ -494,4 +496,72 @@ NUEVO SALDO:    ${salStr}
             cont.innerHTML = clienteActivo.historial.map(h => `
                 <div class="flex justify-between border-b border-gray-800 pb-1">
                     <span class="text-gray-400">${h.fecha}</span>
-                    <strong class="text-emerald-4
+                    <strong class="text-emerald-400">- C$ ${h.monto.toFixed(2)}</strong>
+                </div>
+            `).join('');
+        }
+
+        function imprimirReciboBT() {
+            if(!clienteActivo) return;
+            if(!navigator.bluetooth) {
+                alert('Web Bluetooth API no está soportada o está desactivada en este navegador. Utilice Google Chrome en Android.');
+                return;
+            }
+            alert(`Buscando impresora Bluetooth PT210...\nGenerando flujo ESC/POS a 32 caracteres para ${clienteActivo.nombre}.`);
+        }
+
+        // USUARIOS
+        function guardarUsuario(e) {
+            e.preventDefault();
+            let u = {
+                id: Date.now(),
+                nombre: document.getElementById('usrNombre').value,
+                cedula: document.getElementById('usrCedula').value,
+                user: document.getElementById('usrUser').value,
+                pass: document.getElementById('usrPass').value,
+                rol: document.getElementById('usrRol').value
+            };
+
+            usuarios.push(u);
+            renderUsuarios();
+            alert('Usuario registrado con éxito.');
+            e.target.reset();
+        }
+
+        function renderUsuarios() {
+            let cont = document.getElementById('listaUsuariosContainer');
+            cont.innerHTML = usuarios.map(u => `
+                <div class="bg-gray-900/60 p-2.5 rounded-xl border border-gray-800 flex justify-between items-center">
+                    <div>
+                        <strong class="text-white block">${u.nombre}</strong>
+                        <span class="text-[9px] text-gray-400">User: ${u.user} | Cédula: ${u.cedula}</span>
+                    </div>
+                    <span class="text-[9px] uppercase px-2 py-0.5 rounded font-bold ${u.rol === 'admin' ? 'bg-purple-500/20 text-purple-300' : 'bg-blue-500/20 text-blue-300'}">${u.rol}</span>
+                </div>
+            `).join('');
+        }
+
+        // SCORECARD
+        let chart;
+        function initChart() {
+            let ctx = document.getElementById('scoreChart').getContext('2d');
+            if(chart) chart.destroy();
+            chart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Al Corriente', 'Próximos', 'Por Vencer', 'Alerta'],
+                    datasets: [{
+                        data: [30340, 13990, 29423, 56697],
+                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { plugins: { legend: { display: false } }, cutout: '72%' }
+            });
+        }
+
+        // INICIALIZACIÓN
+        calcularSimulacion();
+    </script>
+</body>
+</html>
