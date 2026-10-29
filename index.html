@@ -14,25 +14,49 @@
 </head>
 <body class="pb-24 font-sans">
 
-    <!-- HEADER DE CONTROL DE ROL -->
-    <header class="bg-gray-900/90 border-b border-gray-800 p-4 sticky top-0 z-50 flex justify-between items-center backdrop-blur-md">
+    <!-- PANTALLA DE LOGIN (INICIAL) -->
+    <div id="loginScreen" class="fixed inset-0 bg-gray-950 z-50 flex items-center justify-center p-4">
+        <div class="glass-card p-6 rounded-3xl w-full max-w-xs space-y-5 text-center">
+            <div class="w-16 h-16 bg-blue-600/20 text-blue-400 rounded-2xl flex items-center justify-center mx-auto border border-blue-500/30 text-2xl">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div>
+                <h2 class="text-xl font-black text-white">CrediCobro Pro</h2>
+                <p class="text-xs text-gray-400">Sistema de Cobranza - Matagalpa</p>
+            </div>
+            <form onsubmit="ejecutarLogin(event)" class="space-y-3 text-left">
+                <div>
+                    <label class="text-[10px] text-gray-400 font-bold block mb-1">USUARIO</label>
+                    <input type="text" id="loginUser" value="admin" required class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="text-[10px] text-gray-400 font-bold block mb-1">CONTRASEÑA</label>
+                    <input type="password" id="loginPass" value="1234" required class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-500">
+                </div>
+                <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-xs py-3 rounded-xl shadow-lg transition">
+                    INICIAR SESIÓN
+                </button>
+            </form>
+            <p class="text-[9px] text-gray-500">Demo: admin / 1234</p>
+        </div>
+    </div>
+
+    <!-- HEADER PRINCIPAL -->
+    <header class="bg-gray-900/90 border-b border-gray-800 p-4 sticky top-0 z-40 flex justify-between items-center backdrop-blur-md">
         <div>
             <h1 class="font-black text-lg bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent flex items-center gap-2">
-                <i class="fa-solid fa-shield-halved text-blue-500"></i> CrediCobro Pro
+                <i class="fa-solid fa-wallet text-blue-500"></i> CrediCobro Pro
             </h1>
-            <p class="text-[10px] text-gray-400" id="roleText">Rol: Administrador (Vista Global)</p>
+            <p class="text-[10px] text-gray-400" id="roleText">Usuario: Admin</p>
         </div>
-        <select id="roleSelector" onchange="cambiarRol(this.value)" class="bg-gray-800 text-xs text-blue-300 font-bold px-3 py-1.5 rounded-xl border border-gray-700 outline-none">
-            <option value="admin">Administrador</option>
-            <option value="analista">Analista Crédito</option>
-            <option value="carlos">Cobrador: Carlos</option>
-            <option value="ana">Cobradora: Ana</option>
-        </select>
+        <button onclick="cerrarSesion()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs px-3 py-1.5 rounded-xl border border-gray-700 font-bold flex items-center gap-1">
+            <i class="fa-solid fa-right-from-bracket"></i> Salir
+        </button>
     </header>
 
-    <!-- NAVEGACIÓN INFERIOR -->
+    <!-- BARRA NAVEGACIÓN INFERIOR -->
     <nav class="bg-gray-900/95 border-t border-gray-800 fixed bottom-0 left-0 right-0 z-40 flex justify-around py-2.5 backdrop-blur-md">
-        <button onclick="switchTab('scorecard')" id="nav-scorecard" class="flex flex-col items-center text-gray-400 text-xs font-bold">
+        <button onclick="switchTab('scorecard')" id="nav-scorecard" class="flex flex-col items-center text-blue-400 text-xs font-bold">
             <i class="fa-solid fa-chart-pie text-base mb-0.5"></i> Scorecard
         </button>
         <button onclick="switchTab('clientes')" id="nav-clientes" class="flex flex-col items-center text-gray-400 text-xs font-bold">
@@ -41,20 +65,20 @@
         <button onclick="switchTab('personal')" id="nav-personal" class="flex flex-col items-center text-gray-400 text-xs font-bold">
             <i class="fa-solid fa-id-card text-base mb-0.5"></i> Personal
         </button>
-        <button onclick="switchTab('simulador')" id="nav-simulador" class="flex flex-col items-center text-blue-400 text-xs font-bold">
+        <button onclick="switchTab('simulador')" id="nav-simulador" class="flex flex-col items-center text-gray-400 text-xs font-bold">
             <i class="fa-solid fa-calculator text-base mb-0.5"></i> Simulador
         </button>
     </nav>
 
-    <!-- CONTENEDOR PRINCIPAL -->
+    <!-- CONTENEDOR VISTAS -->
     <main class="p-4 max-w-md mx-auto space-y-4">
 
-        <!-- SCORECARD -->
-        <section id="tab-scorecard" class="space-y-4 hidden">
+        <!-- VISTA 1: SCORECARD -->
+        <section id="tab-scorecard" class="space-y-4">
             <div class="glass-card p-4 rounded-2xl flex justify-between items-center">
                 <div>
                     <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Cartera Total</span>
-                    <h2 class="text-xl font-black text-white">NIO 738,991.00</h2>
+                    <h2 class="text-xl font-black text-white" id="totalCarteraDisplay">NIO 738,991.00</h2>
                 </div>
                 <span class="bg-emerald-500/20 text-emerald-400 text-xs px-2.5 py-1 rounded-full border border-emerald-500/30 font-bold">40 Cuotas Fijas</span>
             </div>
@@ -66,43 +90,53 @@
             </div>
         </section>
 
-        <!-- CLIENTES (KARDEX) -->
+        <!-- VISTA 2: CLIENTES -->
         <section id="tab-clientes" class="space-y-3 hidden">
-            <input type="text" placeholder="Buscar por cliente o cédula..." class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs outline-none focus:border-blue-500">
-            
-            <div class="glass-card p-3 rounded-xl flex justify-between items-center cursor-pointer" onclick="abrirKardex('JANETJ CANO MARTINEZ', '10,160.00')">
-                <div>
-                    <h4 class="font-bold text-sm text-white">JANETJ CANO MARTINEZ</h4>
-                    <p class="text-[10px] text-gray-400">Cédula: 441-220490-0012L</p>
-                </div>
-                <div class="text-right">
-                    <span class="text-xs font-black text-blue-400 block">NIO 10,160.00</span>
-                    <span class="text-[9px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-bold">Cuota: C$ 338.00</span>
-                </div>
+            <div class="flex gap-2">
+                <input type="text" id="searchClientInput" oninput="filtrarClientes()" placeholder="Buscar cliente o cédula..." class="flex-1 bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs outline-none focus:border-blue-500 text-white">
+                <button onclick="abrirModalNuevoCliente()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-plus"></i> Nuevo
+                </button>
+            </div>
+
+            <div id="listaClientesContainer" class="space-y-2">
+                <!-- Se renderiza por JS -->
             </div>
         </section>
 
-        <!-- GESTIÓN DE PERSONAL -->
+        <!-- VISTA 3: PERSONAL / USUARIOS -->
         <section id="tab-personal" class="space-y-4 hidden">
             <div class="glass-card p-4 rounded-2xl space-y-3">
-                <h3 class="text-xs font-bold text-blue-400 uppercase tracking-wider"><i class="fa-solid fa-user-plus"></i> Registrar Usuario</h3>
-                <div class="space-y-2 text-xs">
-                    <input type="text" placeholder="Nombre completo" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none">
-                    <input type="text" placeholder="Cédula (Ej: 441-120588-0003K)" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none">
+                <h3 class="text-xs font-bold text-blue-400 uppercase tracking-wider"><i class="fa-solid fa-user-plus"></i> Registrar Usuario / Personal</h3>
+                <form onsubmit="guardarUsuario(event)" class="space-y-2 text-xs">
+                    <input type="text" id="usrNombre" placeholder="Nombre completo" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
+                    <input type="text" id="usrCedula" placeholder="Cédula (Ej: 441-120588-0003K)" required pattern="^[0-9]{3}-[0-9]{6}-[0-9]{4}[A-Za-z]$" title="Formato Nicaragua: 441-120588-0003K" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
+                    <input type="text" id="usrUser" placeholder="Nombre de Usuario (Login)" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
+                    <input type="password" id="usrPass" placeholder="Contraseña" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
                     <div class="grid grid-cols-2 gap-2">
-                        <select class="bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none">
+                        <select id="usrRol" class="bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none">
                             <option value="admin">Administrador</option>
                             <option value="analista">Analista Crédito</option>
                             <option value="cobrador">Cobrador</option>
                         </select>
-                        <button class="bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg p-2.5">Guardar</button>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg p-2.5 transition">
+                            Guardar Usuario
+                        </button>
                     </div>
+                </form>
+            </div>
+
+            <!-- TABLA DE PERSONAL CREADO -->
+            <div class="glass-card p-4 rounded-2xl space-y-2">
+                <h4 class="text-xs font-bold text-gray-300">Personal Registrado</h4>
+                <div id="listaUsuariosContainer" class="space-y-2 text-xs">
+                    <!-- Se renderiza por JS -->
                 </div>
             </div>
         </section>
 
-        <!-- SIMULADOR FINANCIERO CORREGIDO -->
-        <section id="tab-simulador" class="space-y-4">
+        <!-- VISTA 4: SIMULADOR -->
+        <section id="tab-simulador" class="space-y-4 hidden">
             <div class="glass-card p-4 rounded-2xl space-y-3">
                 <h3 class="text-xs font-bold text-purple-400 uppercase tracking-wider"><i class="fa-solid fa-calculator"></i> Simulador de Crédito</h3>
                 <div>
@@ -136,91 +170,5 @@
 
     </main>
 
-    <!-- MODAL IMPRESIÓN PT210 -->
-    <div id="modalImpresion" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-card rounded-2xl w-full max-w-xs p-4 space-y-3">
-            <h3 class="text-xs font-bold text-emerald-400"><i class="fa-solid fa-print"></i> Recibo PT210 (32 Chars)</h3>
-            <pre id="ticketPreviewBox" class="bg-gray-950 text-emerald-400 font-mono text-[9px] p-3 rounded-xl leading-tight overflow-x-auto">
-================================
-     CRÉDITOS Y COBRANZAS       
-     MATAGALPA - NICARAGUA      
-================================
-RECIBO DE PAGO:  #REC-20261028-01
---------------------------------
-CLIENTE: JANETJ CANO MARTINEZ   
-GESTOR:  Carlos Mendoza         
---------------------------------
-MONTO RECIBIDO:      NIO 250.00 
-NUEVO SALDO:      NIO 10,160.00 
-================================
-  ¡GRACIAS POR SU PUNTUAL PAGO! 
-            </pre>
-            <button onclick="cerrarTicket()" class="w-full bg-gray-800 text-white font-bold text-xs py-2 rounded-xl">Cerrar</button>
-        </div>
-    </div>
-
-    <script>
-        function switchTab(id) {
-            ['scorecard', 'clientes', 'personal', 'simulador'].forEach(t => {
-                document.getElementById('tab-' + t).classList.add('hidden');
-                document.getElementById('nav-' + t).classList.replace('text-blue-400', 'text-gray-400');
-            });
-            document.getElementById('tab-' + id).classList.remove('hidden');
-            document.getElementById('nav-' + id).classList.replace('text-gray-400', 'text-blue-400');
-            if(id === 'scorecard') initChart();
-        }
-
-        function cambiarRol(v) {
-            document.getElementById('roleText').innerText = `Rol: ${v.toUpperCase()}`;
-        }
-
-        function calcularSimulacion() {
-            let p = parseFloat(document.getElementById('simMonto').value) || 0;
-            
-            // Regla escalonada: C$ 400 por cada C$ 10,000 de principal (4%)
-            let com = (p / 10000) * 400;
-            if (p < 4000) com = 100; // Piso mínimo para créditos pequeños
-            
-            let fin = p + com;
-            let int = fin * 0.30; // 15% mensual x 2 meses
-            let tot = fin + int;
-            let cuo = tot / 40;
-
-            document.getElementById('simComision').innerText = `C$ ${com.toFixed(2)}`;
-            document.getElementById('simFinanciado').innerText = `C$ ${fin.toFixed(2)}`;
-            document.getElementById('simInteres').innerText = `C$ ${int.toFixed(2)}`;
-            document.getElementById('simTotal').innerText = `C$ ${tot.toFixed(2)}`;
-            document.getElementById('simCuota').innerText = `C$ ${cuo.toFixed(2)}`;
-        }
-
-        function abrirKardex(nombre, saldo) {
-            document.getElementById('modalImpresion').classList.remove('hidden');
-        }
-
-        function cerrarTicket() {
-            document.getElementById('modalImpresion').classList.add('hidden');
-        }
-
-        let chart;
-        function initChart() {
-            let ctx = document.getElementById('scoreChart').getContext('2d');
-            if(chart) chart.destroy();
-            chart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Al Corriente', 'Próximos', 'Por Vencer', 'Alerta'],
-                    datasets: [{
-                        data: [30340, 13990, 29423, 56697],
-                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'],
-                        borderWidth: 0
-                    }]
-                },
-                options: { plugins: { legend: { display: false } }, cutout: '70%' }
-            });
-        }
-
-        // Ejecutar simulación inicial
-        calcularSimulacion();
-    </script>
-</body>
-</html>
+    <!-- MODAL 1: CREAR NUEVO CLIENTE -->
+    <div id="modalNuevoCliente" class="fixed inset-0 bg-
