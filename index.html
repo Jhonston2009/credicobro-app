@@ -201,6 +201,19 @@
                 <input type="text" id="cliTel" placeholder="Teléfono" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
                 <input type="text" id="cliDireccion" placeholder="Dirección / Comarca" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
                 <input type="number" id="cliMonto" placeholder="Monto Préstamo Solicitado" value="10000" step="1000" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
+                
+                <!-- NUEVOS CAMPOS: INTERÉS Y PLAZO -->
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[10px] text-gray-400 font-bold block mb-1">Interés (%)</label>
+                        <input type="number" id="cliInteres" placeholder="Ej. 30" value="30" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-400 font-bold block mb-1">Plazo (Cuotas)</label>
+                        <input type="number" id="cliPlazo" placeholder="Ej. 40" value="40" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
+                    </div>
+                </div>
+
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-lg transition mt-2">
                     Crear y Aprobar Préstamo
                 </button>
@@ -365,21 +378,26 @@ NUEVO SALDO:           C$ 0.00
         }
 
         // FINANCIAL SIMULATOR
-        function calcularSimulacion() {
-            let p = parseFloat(document.getElementById('simMonto').value) || 0;
-            let com = (p / 10000) * 400; // C$400 por cada C$10,000 (4%)
-            if(p < 4000) com = 100;
+       function calcularSimulacion() {
+            const principal = parseFloat(document.getElementById('simMonto').value) || 0;
+            
+            // Nueva lógica de comisión: 200 base para montos pequeños (ej. 4000)
+            let comision = 200; 
+            if (principal >= 10000 && principal < 15000) comision = 400;
+            else if (principal >= 15000 && principal < 25000) comision = 600;
+            else if (principal >= 25000 && principal < 50000) comision = 800;
+            else if (principal >= 50000) comision = 1200;
 
-            let fin = p + com;
-            let int = fin * 0.30;
-            let tot = fin + int;
-            let cuo = tot / 40;
+            const financiado = principal + comision;
+            const interesTotal = financiado * 0.30; // 30% fijo en el simulador
+            const totalPagar = financiado + interesTotal;
+            const cuotaEfectiva = totalPagar / 40;  // 40 cuotas fijas en el simulador
 
-            document.getElementById('simComision').innerText = `C$ ${com.toFixed(2)}`;
-            document.getElementById('simFinanciado').innerText = `C$ ${fin.toFixed(2)}`;
-            document.getElementById('simInteres').innerText = `C$ ${int.toFixed(2)}`;
-            document.getElementById('simTotal').innerText = `C$ ${tot.toFixed(2)}`;
-            document.getElementById('simCuota').innerText = `C$ ${cuo.toFixed(2)}`;
+            document.getElementById('simComision').textContent = `C$ ${comision.toFixed(2)}`;
+            document.getElementById('simFinanciado').textContent = `C$ ${financiado.toLocaleString('es-NI', {minimumFractionDigits:2})}`;
+            document.getElementById('simInteres').textContent = `C$ ${interesTotal.toLocaleString('es-NI', {minimumFractionDigits:2})}`;
+            document.getElementById('simTotal').textContent = `C$ ${totalPagar.toLocaleString('es-NI', {minimumFractionDigits:2})}`;
+            document.getElementById('simCuota').textContent = `C$ ${cuotaEfectiva.toFixed(2)}`;
         }
 
         // CLIENT MANAGEMENT
@@ -412,29 +430,50 @@ NUEVO SALDO:           C$ 0.00
             document.getElementById('modalNuevoCliente').classList.add('hidden');
         }
 
-        function guardarNuevoCliente(e) {
-            e.preventDefault();
-            let monto = parseFloat(document.getElementById('cliMonto').value);
-            let com = (monto / 10000) * 400;
-            let fin = monto + com;
-            let tot = fin + (fin * 0.30);
-            let cuo = tot / 40;
+        function guardarNuevoCliente(event) {
+            event.preventDefault();
+            
+            // Capturar campos base
+            const nombre = document.getElementById('cliNombre').value;
+            const tel = document.getElementById('cliTel').value;
+            const dir = document.getElementById('cliDireccion').value;
+            const monto = parseFloat(document.getElementById('cliMonto').value);
+            
+            // Capturar los NUEVOS campos dinámicos
+            const interesDecimal = parseFloat(document.getElementById('cliInteres').value) / 100; // 30 -> 0.30
+            const plazo = parseInt(document.getElementById('cliPlazo').value);
 
-            let nuevo = {
-                id: Date.now(),
-                nombre: document.getElementById('cliNombre').value,
-                cedula: document.getElementById('cliCedula').value,
-                telefono: document.getElementById('cliTel').value,
-                direccion: document.getElementById('cliDireccion').value,
-                saldo: tot,
-                cuota: cuo,
-                historial: []
-            };
+            // Calcular comisión con la nueva regla
+            let comision = 200;
+            if (monto >= 10000 && monto < 15000) comision = 400;
+            else if (monto >= 15000 && monto < 25000) comision = 600;
+            else if (monto >= 25000 && monto < 50000) comision = 800;
+            else if (monto >= 50000) comision = 1200;
 
-            clientes.push(nuevo);
-            renderClientes();
-            cerrarModalNuevoCliente();
-            alert('Cliente y préstamo registrados correctamente.');
+            // Calcular matemática financiera con valores dinámicos
+            let financiado = monto + comision;
+            let totalPagar = financiado * (1 + interesDecimal);
+            let cuota = totalPagar / plazo;
+
+            // Guardar en el arreglo de clientes
+            appState.clientes.unshift({
+                id: 'CL-' + Math.floor(200 + Math.random()*800),
+                nombre: nombre, 
+                tel: tel, 
+                direccion: dir,
+                montoOriginal: monto, 
+                saldoActual: totalPagar, 
+                cuotaPactada: cuota,
+                fechaVenc: new Date().toLocaleDateString('es-NI'), // O la lógica de fecha que utilices
+                diasAtraso: 0, 
+                cobradorId: appState.currentRole === 'ADMIN' ? 'COBRADOR_1' : appState.currentRole,
+                transacciones: []
+            });
+
+            guardarEstadoLocal();
+            cerrarModalNuevoCliente(); // Asegúrate de que esta función exista y oculte tu modal
+            switchTab('clientes');
+            mostrarToast("Cliente guardado con condiciones personalizadas.");
         }
 
         // KARDEX & PRINTER PT210
