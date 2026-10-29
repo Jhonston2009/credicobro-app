@@ -1,0 +1,9 @@
+{
+  "name": "Gestor de cobro",
+  "short_name": "Gestor de cobro",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ea580c",
+  "description": "Gestor de Crédito y Cobranza"
+}
