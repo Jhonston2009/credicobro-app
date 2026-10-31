@@ -15,6 +15,7 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.5); border-radius: 4px; }
     </style>
+    <link rel="manifest" href="./manifest.json">
 </head>
 <body class="pb-24 font-sans select-none antialiased">
 
@@ -31,17 +32,14 @@
             <div class="space-y-3 text-left">
                 <div>
                     <label class="text-[10px] text-gray-400 font-bold block mb-1 uppercase tracking-wider">Usuario</label>
-                    <input type="text" id="loginUser" value="admin" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-500">
+                    <input type="text" id="loginUser" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-500">
                 </div>
                 <div>
                     <label class="text-[10px] text-gray-400 font-bold block mb-1 uppercase tracking-wider">Contraseña</label>
-                    <input type="password" id="loginPass" value="1234" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-500">
+                    <input type="password" id="loginPass" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-500">
                 </div>
-                <button type="button" onclick="entrarSistema('admin')" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black text-xs py-3 rounded-xl shadow-lg active:scale-95 transition">
-                    ENTRAR COMO ADMINISTRADOR
-                </button>
-                <button type="button" onclick="entrarSistema('analista')" class="w-full bg-gray-800 hover:bg-gray-700 text-blue-300 font-bold text-xs py-2.5 rounded-xl border border-gray-700 transition">
-                    Entrar como Analista
+                <button type="button" onclick="entrarSistema()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black text-xs py-3 rounded-xl shadow-lg active:scale-95 transition">
+                    INICIAR SESIÓN
                 </button>
             </div>
         </div>
@@ -139,7 +137,7 @@
                     <input type="number" id="simMonto" value="10000" step="1000" oninput="calcularSimulacion()" class="w-full bg-gray-900 border border-purple-500/30 rounded-xl p-3 text-lg font-black text-purple-300 outline-none">
                 </div>
                 <div class="grid grid-cols-2 gap-2 text-xs">
-                    <div class="bg-gray-900/60 p-2.5 rounded-xl border border-gray-800"><span class="text-gray-400 block text-[10px]">Comisión (4%)</span><strong id="simComision" class="text-emerald-400">C$ 400.00</strong></div>
+                    <div class="bg-gray-900/60 p-2.5 rounded-xl border border-gray-800"><span class="text-gray-400 block text-[10px]">Comisión</span><strong id="simComision" class="text-emerald-400">C$ 400.00</strong></div>
                     <div class="bg-gray-900/60 p-2.5 rounded-xl border border-gray-800"><span class="text-gray-400 block text-[10px]">Financiado</span><strong id="simFinanciado" class="text-white">C$ 10,400.00</strong></div>
                     <div class="bg-gray-900/60 p-2.5 rounded-xl border border-gray-800"><span class="text-gray-400 block text-[10px]">Interés (30%)</span><strong id="simInteres" class="text-white">C$ 3,120.00</strong></div>
                     <div class="bg-gray-900/60 p-2.5 rounded-xl border border-gray-800"><span class="text-gray-400 block text-[10px]">Total Pagar</span><strong id="simTotal" class="text-white">C$ 13,520.00</strong></div>
@@ -156,15 +154,27 @@
     <div id="modalNuevoCliente" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
         <div class="glass-modal rounded-2xl w-full max-w-xs p-4 space-y-3">
             <div class="flex justify-between items-center border-b border-gray-800 pb-2">
-                <h3 class="text-xs font-bold text-blue-400 uppercase">Nuevo Cliente</h3>
+                <h3 class="text-xs font-bold text-blue-400 uppercase"><i class="fa-solid fa-user-plus"></i> Registrar Nuevo Cliente</h3>
                 <button type="button" onclick="cerrarModalNuevoCliente()" class="text-gray-400 font-bold text-lg">&times;</button>
             </div>
             <form id="formNuevoCliente" onsubmit="guardarNuevoCliente(event)" class="space-y-2 text-xs">
-                <input type="text" id="cliNombre" placeholder="Nombre Completo" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none">
-                <input type="text" id="cliCedula" placeholder="Cédula (441-120588-0003K)" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none">
-                <input type="text" id="cliTel" placeholder="Teléfono" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none">
-                <input type="text" id="cliDireccion" placeholder="Dirección" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none">
-                <input type="number" id="cliMonto" placeholder="Monto" value="10000" step="1000" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none">
+                <input type="text" id="cliNombre" placeholder="Nombre Completo" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
+                <input type="text" id="cliCedula" placeholder="Cédula (441-120588-0003K)" required pattern="^[0-9]{3}-[0-9]{6}-[0-9]{4}[A-Za-z]$" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
+                <input type="text" id="cliTel" placeholder="Teléfono" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
+                <input type="text" id="cliDireccion" placeholder="Dirección / Comarca" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
+                <input type="number" id="cliMonto" placeholder="Monto Préstamo Solicitado" value="10000" step="1000" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[10px] text-gray-400 font-bold block mb-1">Interés (%)</label>
+                        <input type="number" id="cliInteres" placeholder="Ej. 30" value="30" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-400 font-bold block mb-1">Plazo (Cuotas)</label>
+                        <input type="number" id="cliPlazo" placeholder="Ej. 40" value="40" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
+                    </div>
+                </div>
+
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-lg transition mt-2">Crear y Aprobar Préstamo</button>
             </form>
         </div>
@@ -226,9 +236,13 @@
         let usuarioLogueado = null;
         let clienteActivo = null;
 
-        // ACCESO DIRECTO GARANTIZADO POR ROL
-        function entrarSistema(rolSeleccionado) {
-            let encontrado = usuarios.find(x => x.rol === rolSeleccionado);
+        // ACCESO AUTENTICADO Y REDIRECCIÓN POR ROL
+        function entrarSistema() {
+            let inputUser = document.getElementById('loginUser').value.trim();
+            let inputPass = document.getElementById('loginPass').value.trim();
+
+            let encontrado = usuarios.find(x => x.user === inputUser && x.pass === inputPass);
+            
             if (encontrado) {
                 usuarioLogueado = encontrado;
                 document.getElementById('loginScreen').classList.add('hidden');
@@ -240,12 +254,15 @@
                     document.getElementById('nav-personal').classList.remove('hidden');
                 }
 
+                document.getElementById('loginUser').value = '';
+                document.getElementById('loginPass').value = '';
+
                 renderClientes();
                 renderUsuarios();
                 initChart();
                 switchTab('scorecard');
             } else {
-                alert('Error al cargar perfil.');
+                alert('Usuario o contraseña incorrectos.');
             }
         }
 
@@ -270,19 +287,24 @@
         }
 
         function calcularSimulacion() {
-            let p = parseFloat(document.getElementById('simMonto').value) || 0;
-            let com = (p / 10000) * 400;
-            if (p < 4000) com = 100;
-            let fin = p + com;
-            let int = fin * 0.30;
-            let tot = fin + int;
-            let cuo = tot / 40;
+            const principal = parseFloat(document.getElementById('simMonto').value) || 0;
+            
+            let comision = 200; 
+            if (principal >= 10000 && principal < 15000) comision = 400;
+            else if (principal >= 15000 && principal < 25000) comision = 600;
+            else if (principal >= 25000 && principal < 50000) comision = 800;
+            else if (principal >= 50000) comision = 1200;
 
-            document.getElementById('simComision').innerText = `C$ ${com.toFixed(2)}`;
-            document.getElementById('simFinanciado').innerText = `C$ ${fin.toFixed(2)}`;
-            document.getElementById('simInteres').innerText = `C$ ${int.toFixed(2)}`;
-            document.getElementById('simTotal').innerText = `C$ ${tot.toFixed(2)}`;
-            document.getElementById('simCuota').innerText = `C$ ${cuo.toFixed(2)}`;
+            const financiado = principal + comision;
+            const interesTotal = financiado * 0.30; 
+            const totalPagar = financiado + interesTotal;
+            const cuotaEfectiva = totalPagar / 40;  
+
+            document.getElementById('simComision').textContent = `C$ ${comision.toFixed(2)}`;
+            document.getElementById('simFinanciado').textContent = `C$ ${financiado.toLocaleString('es-NI', {minimumFractionDigits:2})}`;
+            document.getElementById('simInteres').textContent = `C$ ${interesTotal.toLocaleString('es-NI', {minimumFractionDigits:2})}`;
+            document.getElementById('simTotal').textContent = `C$ ${totalPagar.toLocaleString('es-NI', {minimumFractionDigits:2})}`;
+            document.getElementById('simCuota').textContent = `C$ ${cuotaEfectiva.toFixed(2)}`;
         }
 
         function renderClientes() {
@@ -311,21 +333,34 @@
 
         function guardarNuevoCliente(e) {
             e.preventDefault();
-            let monto = parseFloat(document.getElementById('cliMonto').value) || 0;
-            let com = (monto / 10000) * 400;
-            if (monto < 4000) com = 100;
-            let fin = monto + com;
-            let tot = fin + (fin * 0.30);
-            let cuo = tot / 40;
+            
+            const nombre = document.getElementById('cliNombre').value.trim();
+            const cedula = document.getElementById('cliCedula').value.trim();
+            const tel = document.getElementById('cliTel').value.trim();
+            const dir = document.getElementById('cliDireccion').value.trim();
+            const monto = parseFloat(document.getElementById('cliMonto').value);
+            
+            const interesDecimal = parseFloat(document.getElementById('cliInteres').value) / 100;
+            const plazo = parseInt(document.getElementById('cliPlazo').value);
+
+            let comision = 200;
+            if (monto >= 10000 && monto < 15000) comision = 400;
+            else if (monto >= 15000 && monto < 25000) comision = 600;
+            else if (monto >= 25000 && monto < 50000) comision = 800;
+            else if (monto >= 50000) comision = 1200;
+
+            let financiado = monto + comision;
+            let totalPagar = financiado * (1 + interesDecimal);
+            let cuota = totalPagar / plazo;
 
             let nuevo = {
                 id: Date.now(),
-                nombre: document.getElementById('cliNombre').value.trim(),
-                cedula: document.getElementById('cliCedula').value.trim(),
-                telefono: document.getElementById('cliTel').value.trim(),
-                direccion: document.getElementById('cliDireccion').value.trim(),
-                saldo: tot,
-                cuota: cuo,
+                nombre: nombre,
+                cedula: cedula,
+                telefono: tel,
+                direccion: dir,
+                saldo: totalPagar,
+                cuota: cuota,
                 historial: []
             };
 
@@ -464,5 +499,6 @@ NUEVO SALDO:    ${salStr}
 
         calcularSimulacion();
     </script>
+    <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./pwabuilder-sw.js'); }</script>
 </body>
 </html>
