@@ -18,9 +18,7 @@
 </head>
 <body class="pb-24 font-sans select-none antialiased">
 
-    <!-- ========================================== -->
-    <!-- PANTALLA DE AUTENTICACIÓN / LOGIN           -->
-    <!-- ========================================== -->
+    <!-- PANTALLA DE AUTENTICACIÓN / LOGIN -->
     <div id="loginScreen" class="fixed inset-0 bg-gray-950 z-50 flex items-center justify-center p-4">
         <div class="glass-card p-6 rounded-3xl w-full max-w-xs space-y-5 text-center shadow-2xl border border-gray-800">
             <div class="w-16 h-16 bg-blue-600/20 text-blue-400 rounded-2xl flex items-center justify-center mx-auto border border-blue-500/30 text-2xl shadow-inner">
@@ -46,9 +44,7 @@
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- HEADER SUPERIOR PRINCIPAL                   -->
-    <!-- ========================================== -->
+    <!-- HEADER SUPERIOR PRINCIPAL -->
     <header class="bg-gray-900/90 border-b border-gray-800 p-4 sticky top-0 z-40 flex justify-between items-center backdrop-blur-md">
         <div>
             <h1 class="font-black text-lg bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent flex items-center gap-2">
@@ -61,9 +57,7 @@
         </button>
     </header>
 
-    <!-- ========================================== -->
-    <!-- NAVEGACIÓN INFERIOR (TABS)                 -->
-    <!-- ========================================== -->
+    <!-- NAVEGACIÓN INFERIOR (TABS) -->
     <nav class="bg-gray-900/95 border-t border-gray-800 fixed bottom-0 left-0 right-0 z-40 flex justify-around py-2.5 backdrop-blur-md">
         <button onclick="switchTab('scorecard')" id="nav-scorecard" class="flex flex-col items-center text-blue-400 text-xs font-bold transition">
             <i class="fa-solid fa-chart-pie text-base mb-0.5"></i> Scorecard
@@ -79,9 +73,7 @@
         </button>
     </nav>
 
-    <!-- ========================================== -->
-    <!-- CONTENEDOR PRINCIPAL DE PANTALLAS          -->
-    <!-- ========================================== -->
+    <!-- CONTENEDOR PRINCIPAL DE PANTALLAS -->
     <main class="p-4 max-w-md mx-auto space-y-4">
 
         <!-- VISTA 1: SCORECARD GERENCIAL -->
@@ -161,7 +153,7 @@
                 </div>
                 <div class="grid grid-cols-2 gap-2 text-xs">
                     <div class="bg-gray-900/60 p-2.5 rounded-xl border border-gray-800">
-                        <span class="text-gray-400 block text-[10px]">Comisión Directa</span>
+                        <span class="text-gray-400 block text-[10px]">Comisión Directa (4%)</span>
                         <strong id="simComision" class="text-emerald-400">C$ 400.00</strong>
                     </div>
                     <div class="bg-gray-900/60 p-2.5 rounded-xl border border-gray-800">
@@ -186,44 +178,27 @@
 
     </main>
 
-    <!-- ========================================== -->
-    <!-- MODAL 1: NUEVO CLIENTE                    -->
-    <!-- ========================================== -->
+    <!-- MODAL 1: NUEVO CLIENTE (CORREGIDO) -->
     <div id="modalNuevoCliente" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
         <div class="glass-modal rounded-2xl w-full max-w-xs p-4 space-y-3">
             <div class="flex justify-between items-center border-b border-gray-800 pb-2">
                 <h3 class="text-xs font-bold text-blue-400 uppercase"><i class="fa-solid fa-user-plus"></i> Registrar Nuevo Cliente</h3>
-                <button onclick="cerrarModalNuevoCliente()" class="text-gray-400 font-bold text-lg">&times;</button>
+                <button type="button" onclick="cerrarModalNuevoCliente()" class="text-gray-400 font-bold text-lg">&times;</button>
             </div>
-            <form onsubmit="guardarNuevoCliente(event)" class="space-y-2 text-xs">
+            <form id="formNuevoCliente" onsubmit="guardarNuevoCliente(event)" class="space-y-2 text-xs">
                 <input type="text" id="cliNombre" placeholder="Nombre Completo" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
                 <input type="text" id="cliCedula" placeholder="Cédula (441-120588-0003K)" required pattern="^[0-9]{3}-[0-9]{6}-[0-9]{4}[A-Za-z]$" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
                 <input type="text" id="cliTel" placeholder="Teléfono" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
                 <input type="text" id="cliDireccion" placeholder="Dirección / Comarca" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
                 <input type="number" id="cliMonto" placeholder="Monto Préstamo Solicitado" value="10000" step="1000" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
-                
-                <!-- NUEVOS CAMPOS: INTERÉS Y PLAZO -->
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="text-[10px] text-gray-400 font-bold block mb-1">Interés (%)</label>
-                        <input type="number" id="cliInteres" placeholder="Ej. 30" value="30" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-gray-400 font-bold block mb-1">Plazo (Cuotas)</label>
-                        <input type="number" id="cliPlazo" placeholder="Ej. 40" value="40" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
-                    </div>
-                </div>
-
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-lg transition mt-2">
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-lg transition mt-2 shadow-lg">
                     Crear y Aprobar Préstamo
                 </button>
             </form>
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- MODAL 2: KARDEX Y RECIBO PT210            -->
-    <!-- ========================================== -->
+    <!-- MODAL 2: KARDEX Y RECIBO PT210 -->
     <div id="modalKardex" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
         <div class="glass-modal rounded-2xl w-full max-w-xs p-4 space-y-3 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div class="flex justify-between items-center border-b border-gray-800 pb-2">
@@ -231,7 +206,7 @@
                     <h3 id="kdNombre" class="text-xs font-bold text-white uppercase">CLIENTE</h3>
                     <p id="kdCedula" class="text-[10px] text-gray-400">Cédula</p>
                 </div>
-                <button onclick="cerrarKardex()" class="text-gray-400 font-bold text-lg">&times;</button>
+                <button type="button" onclick="cerrarKardex()" class="text-gray-400 font-bold text-lg">&times;</button>
             </div>
 
             <!-- Accesos Rápidos de Contacto -->
@@ -264,11 +239,11 @@
                 <span class="text-[10px] font-bold text-emerald-300 block uppercase"><i class="fa-solid fa-money-bill-wave"></i> Registrar Abono</span>
                 <div class="flex gap-2">
                     <input type="number" id="inputAbonoMonto" placeholder="Monto C$" class="flex-1 bg-gray-900 border border-gray-800 p-2 rounded-lg text-xs text-white font-bold outline-none">
-                    <button onclick="aplicarAbono()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-2 rounded-lg text-xs transition">
+                    <button type="button" onclick="aplicarAbono()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-2 rounded-lg text-xs transition">
                         Cobrar
                     </button>
                 </div>
-                <button onclick="aplicarCuotaCompleta()" class="w-full bg-gray-800 hover:bg-gray-700 text-emerald-400 font-bold py-1.5 rounded-lg text-[10px] border border-emerald-500/20 transition">
+                <button type="button" onclick="aplicarCuotaCompleta()" class="w-full bg-gray-800 hover:bg-gray-700 text-emerald-400 font-bold py-1.5 rounded-lg text-[10px] border border-emerald-500/20 transition">
                     + Aplicar Cuota Completa Exacta
                 </button>
             </div>
@@ -278,7 +253,7 @@
                 <h4 class="text-[10px] font-bold text-gray-400 uppercase mb-1">Vista Previa Ticket PT210 (58mm)</h4>
                 <pre id="ticketPreviewBox" class="bg-gray-950 text-emerald-400 font-mono text-[9px] p-2.5 rounded-xl leading-tight border border-gray-800 overflow-x-auto">
 ================================
-          FASTMONEY       
+     CRÉDITOS Y COBRANZAS       
      MATAGALPA - NICARAGUA      
 ================================
 RECIBO DE PAGO:  #REC-20261028-01
@@ -301,328 +276,16 @@ NUEVO SALDO:           C$ 0.00
             </div>
 
             <div class="pt-2 border-t border-gray-800 flex gap-2">
-                <button onclick="imprimirReciboBT()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] py-2 rounded-xl flex items-center justify-center gap-1">
+                <button type="button" onclick="imprimirReciboBT()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] py-2 rounded-xl flex items-center justify-center gap-1">
                     <i class="fa-solid fa-print"></i> Imprimir BT
                 </button>
-                <button onclick="cerrarKardex()" class="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs py-2 rounded-xl font-bold">Cerrar</button>
+                <button type="button" onclick="cerrarKardex()" class="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs py-2 rounded-xl font-bold">Cerrar</button>
             </div>
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- LOGICA JAVASCRIPT                          -->
-    <!-- ========================================== -->
+    <!-- LOGICA JAVASCRIPT -->
     <script>
         // ESTADO GLOBAL
         let usuarios = [
-            { id: 1, nombre: 'Administrador Principal', user: 'admin', pass: '1234', rol: 'admin', cedula: '441-120588-0003K' },
-            { id: 2, nombre: 'Analista de Crédito', user: 'analista', pass: '1234', rol: 'analista', cedula: '441-101090-0015L' }
-        ];
-
-        let clientes = [
-            { id: 1, nombre: 'JANETJ CANO MARTINEZ', cedula: '441-220490-0012L', telefono: '88882222', direccion: 'Molino Sur, Matagalpa', saldo: 13520, cuota: 338, historial: [] },
-            { id: 2, nombre: 'ABRAHAM DIONISIO ARAUZ', cedula: '441-120588-0003K', telefono: '88881111', direccion: 'Guanuca, Matagalpa', saldo: 27040, cuota: 676, historial: [] }
-        ];
-
-        let usuarioLogueado = null;
-        let clienteActivo = null;
-
-        // AUTHENTICATION
-        function ejecutarLogin(e) {
-            e.preventDefault();
-            let u = document.getElementById('loginUser').value.trim();
-            let p = document.getElementById('loginPass').value.trim();
-
-            let en = usuarios.find(x => x.user.toLowerCase() === u.toLowerCase() && x.pass === p);
-            if(en) {
-                usuarioLogueado = en;
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('roleText').innerText = `Usuario: ${en.nombre} (${en.rol.toUpperCase()})`;
-                
-                if(en.rol === 'analista') {
-                    document.getElementById('nav-personal').classList.add('hidden');
-                } else {
-                    document.getElementById('nav-personal').classList.remove('hidden');
-                }
-
-                renderClientes();
-                renderUsuarios();
-                initChart();
-            } else {
-                alert('Usuario o contraseña incorrectos.');
-            }
-        }
-
-        function cerrarSesion() {
-            usuarioLogueado = null;
-            document.getElementById('loginUser').value = 'admin';
-            document.getElementById('loginPass').value = '1234';
-            document.getElementById('loginScreen').classList.remove('hidden');
-            switchTab('scorecard');
-        }
-
-        // NAVIGATION
-        function switchTab(id) {
-            if(usuarioLogueado && usuarioLogueado.rol === 'analista' && id === 'personal') {
-                alert('Acceso restringido para el perfil de Analista.');
-                return;
-            }
-
-            ['scorecard', 'clientes', 'personal', 'simulador'].forEach(t => {
-                document.getElementById('tab-' + t).classList.add('hidden');
-                document.getElementById('nav-' + t).classList.replace('text-blue-400', 'text-gray-400');
-            });
-            document.getElementById('tab-' + id).classList.remove('hidden');
-            document.getElementById('nav-' + id).classList.replace('text-gray-400', 'text-blue-400');
-            if(id === 'scorecard') initChart();
-        }
-
-        // FINANCIAL SIMULATOR
-       function calcularSimulacion() {
-            const principal = parseFloat(document.getElementById('simMonto').value) || 0;
-            
-            // Nueva lógica de comisión: 200 base para montos pequeños (ej. 4000)
-            let comision = 200; 
-            if (principal >= 10000 && principal < 15000) comision = 400;
-            else if (principal >= 15000 && principal < 25000) comision = 600;
-            else if (principal >= 25000 && principal < 50000) comision = 800;
-            else if (principal >= 50000) comision = 1200;
-
-            const financiado = principal + comision;
-            const interesTotal = financiado * 0.30; // 30% fijo en el simulador
-            const totalPagar = financiado + interesTotal;
-            const cuotaEfectiva = totalPagar / 40;  // 40 cuotas fijas en el simulador
-
-            document.getElementById('simComision').textContent = `C$ ${comision.toFixed(2)}`;
-            document.getElementById('simFinanciado').textContent = `C$ ${financiado.toLocaleString('es-NI', {minimumFractionDigits:2})}`;
-            document.getElementById('simInteres').textContent = `C$ ${interesTotal.toLocaleString('es-NI', {minimumFractionDigits:2})}`;
-            document.getElementById('simTotal').textContent = `C$ ${totalPagar.toLocaleString('es-NI', {minimumFractionDigits:2})}`;
-            document.getElementById('simCuota').textContent = `C$ ${cuotaEfectiva.toFixed(2)}`;
-        }
-
-        // CLIENT MANAGEMENT
-        function renderClientes() {
-            let cont = document.getElementById('listaClientesContainer');
-            let q = document.getElementById('searchClientInput').value.toLowerCase();
-            
-            let list = clientes.filter(c => c.nombre.toLowerCase().includes(q) || c.cedula.includes(q));
-
-            cont.innerHTML = list.map(c => `
-                <div onclick="abrirKardex(${c.id})" class="glass-card p-3 rounded-xl flex justify-between items-center cursor-pointer hover:bg-gray-800/80 transition">
-                    <div>
-                        <h4 class="font-bold text-sm text-white">${c.nombre}</h4>
-                        <p class="text-[10px] text-gray-400">Cédula: ${c.cedula}</p>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-xs font-black text-blue-400 block">C$ ${c.saldo.toFixed(2)}</span>
-                        <span class="text-[9px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-bold">Cuota: C$ ${c.cuota.toFixed(2)}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function filtrarClientes() { renderClientes(); }
-
-        function abrirModalNuevoCliente() {
-            document.getElementById('modalNuevoCliente').classList.remove('hidden');
-        }
-        function cerrarModalNuevoCliente() {
-            document.getElementById('modalNuevoCliente').classList.add('hidden');
-        }
-
-        function guardarNuevoCliente(event) {
-            event.preventDefault();
-            
-            // Capturar campos base
-            const nombre = document.getElementById('cliNombre').value;
-            const tel = document.getElementById('cliTel').value;
-            const dir = document.getElementById('cliDireccion').value;
-            const monto = parseFloat(document.getElementById('cliMonto').value);
-            
-            // Capturar los NUEVOS campos dinámicos
-            const interesDecimal = parseFloat(document.getElementById('cliInteres').value) / 100; // 30 -> 0.30
-            const plazo = parseInt(document.getElementById('cliPlazo').value);
-
-            // Calcular comisión con la nueva regla
-            let comision = 200;
-            if (monto >= 10000 && monto < 15000) comision = 400;
-            else if (monto >= 15000 && monto < 25000) comision = 600;
-            else if (monto >= 25000 && monto < 50000) comision = 800;
-            else if (monto >= 50000) comision = 1200;
-
-            // Calcular matemática financiera con valores dinámicos
-            let financiado = monto + comision;
-            let totalPagar = financiado * (1 + interesDecimal);
-            let cuota = totalPagar / plazo;
-
-            // Guardar en el arreglo de clientes
-            appState.clientes.unshift({
-                id: 'CL-' + Math.floor(200 + Math.random()*800),
-                nombre: nombre, 
-                tel: tel, 
-                direccion: dir,
-                montoOriginal: monto, 
-                saldoActual: totalPagar, 
-                cuotaPactada: cuota,
-                fechaVenc: new Date().toLocaleDateString('es-NI'), // O la lógica de fecha que utilices
-                diasAtraso: 0, 
-                cobradorId: appState.currentRole === 'ADMIN' ? 'COBRADOR_1' : appState.currentRole,
-                transacciones: []
-            });
-
-            guardarEstadoLocal();
-            cerrarModalNuevoCliente(); // Asegúrate de que esta función exista y oculte tu modal
-            switchTab('clientes');
-            mostrarToast("Cliente guardado con condiciones personalizadas.");
-        }
-
-        // KARDEX & PRINTER PT210
-        function abrirKardex(id) {
-            clienteActivo = clientes.find(c => c.id === id);
-            if(!clienteActivo) return;
-
-            document.getElementById('kdNombre').innerText = clienteActivo.nombre;
-            document.getElementById('kdCedula').innerText = clienteActivo.cedula;
-            document.getElementById('kdSaldo').innerText = `C$ ${clienteActivo.saldo.toFixed(2)}`;
-            document.getElementById('kdCuotaValor').innerText = `C$ ${clienteActivo.cuota.toFixed(2)}`;
-            
-            document.getElementById('btnLlamar').href = `tel:${clienteActivo.telefono}`;
-            document.getElementById('btnWhatsapp').href = `https://wa.me/505${clienteActivo.telefono}?text=Hola%20${encodeURIComponent(clienteActivo.nombre)},%20le%20recordamos%20su%20pago%20pendiente.`;
-            document.getElementById('btnMapa').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clienteActivo.direccion + ', Matagalpa')}`;
-
-            actualizarTicketPreview(0);
-            renderHistorialKardex();
-            document.getElementById('modalKardex').classList.remove('hidden');
-        }
-
-        function cerrarKardex() {
-            document.getElementById('modalKardex').classList.add('hidden');
-        }
-
-        function aplicarAbono() {
-            let m = parseFloat(document.getElementById('inputAbonoMonto').value);
-            if(!m || m <= 0) return alert('Ingrese un monto válido');
-
-            clienteActivo.saldo -= m;
-            clienteActivo.historial.unshift({ fecha: new Date().toLocaleDateString(), monto: m });
-            
-            document.getElementById('kdSaldo').innerText = `C$ ${clienteActivo.saldo.toFixed(2)}`;
-            actualizarTicketPreview(m);
-            document.getElementById('inputAbonoMonto').value = '';
-            
-            renderHistorialKardex();
-            renderClientes();
-            alert(`Abono de C$ ${m.toFixed(2)} registrado correctamente.`);
-        }
-
-        function aplicarCuotaCompleta() {
-            document.getElementById('inputAbonoMonto').value = clienteActivo.cuota.toFixed(2);
-            aplicarAbono();
-        }
-
-        function actualizarTicketPreview(montoAbonado) {
-            let nom = clienteActivo.nombre.padEnd(23).substring(0, 23);
-            let monStr = (`C$ ${montoAbonado.toFixed(2)}`).padStart(14);
-            let salStr = (`C$ ${clienteActivo.saldo.toFixed(2)}`).padStart(14);
-
-            document.getElementById('ticketPreviewBox').innerText = 
-`================================
-     CRÉDITOS Y COBRANZAS       
-     MATAGALPA - NICARAGUA      
-================================
-RECIBO DE PAGO:  #REC-20261028-01
---------------------------------
-CLIENTE: ${nom}
---------------------------------
-MONTO RECIBIDO: ${monStr}
-NUEVO SALDO:    ${salStr}
-================================
-  ¡GRACIAS POR SU PUNTUAL PAGO! `;
-        }
-
-        function renderHistorialKardex() {
-            let cont = document.getElementById('kdHistorial');
-            if(clienteActivo.historial.length === 0) {
-                cont.innerHTML = `<span class="text-gray-500 italic">No hay abonos registrados</span>`;
-                return;
-            }
-            cont.innerHTML = clienteActivo.historial.map(h => `
-                <div class="flex justify-between border-b border-gray-800 pb-1">
-                    <span class="text-gray-400">${h.fecha}</span>
-                    <strong class="text-emerald-400">- C$ ${h.monto.toFixed(2)}</strong>
-                </div>
-            `).join('');
-        }
-
-        async function imprimirReciboBT() {
-            if(!clienteActivo) return;
-            if (!navigator.bluetooth) {
-                alert('Web Bluetooth API no disponible en este navegador.');
-                return;
-            }
-            try {
-                let device = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true,
-                    optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
-                });
-                alert(`Conectando con ${device.name || 'Impresora PT210'}... Imprimiendo recibo de ${clienteActivo.nombre}.`);
-            } catch (err) {
-                alert('Impresión cancelada o dispositivo no seleccionado.');
-            }
-        }
-
-        // USER MANAGEMENT
-        function guardarUsuario(e) {
-            e.preventDefault();
-            let u = {
-                id: Date.now(),
-                nombre: document.getElementById('usrNombre').value,
-                cedula: document.getElementById('usrCedula').value,
-                user: document.getElementById('usrUser').value,
-                pass: document.getElementById('usrPass').value,
-                rol: document.getElementById('usrRol').value
-            };
-
-            usuarios.push(u);
-            renderUsuarios();
-            alert('Usuario registrado con éxito.');
-            e.target.reset();
-        }
-
-        function renderUsuarios() {
-            let cont = document.getElementById('listaUsuariosContainer');
-            cont.innerHTML = usuarios.map(u => `
-                <div class="bg-gray-900/60 p-2.5 rounded-xl border border-gray-800 flex justify-between items-center">
-                    <div>
-                        <strong class="text-white block">${u.nombre}</strong>
-                        <span class="text-[9px] text-gray-400">User: ${u.user} | Cédula: ${u.cedula}</span>
-                    </div>
-                    <span class="text-[9px] uppercase px-2 py-0.5 rounded font-bold ${u.rol === 'admin' ? 'bg-purple-500/20 text-purple-300' : 'bg-blue-500/20 text-blue-300'}">${u.rol}</span>
-                </div>
-            `).join('');
-        }
-
-        // SCORECARD CHART
-        let chart;
-        function initChart() {
-            let ctx = document.getElementById('scoreChart').getContext('2d');
-            if(chart) chart.destroy();
-            chart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Al Corriente', 'Próximos', 'Por Vencer', 'Alerta'],
-                    datasets: [{
-                        data: [30340, 13990, 29423, 56697],
-                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'],
-                        borderWidth: 0
-                    }]
-                },
-                options: { plugins: { legend: { display: false } }, cutout: '72%' }
-            });
-        }
-
-        // INIT
-        calcularSimulacion();
-    </script>
-</body>
-</html>
+            { id: 1, nombre: 'Administrador Principal', user
