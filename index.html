@@ -20,7 +20,7 @@
 
     <!-- PANTALLA DE AUTENTICACIÓN / LOGIN -->
     <div id="loginScreen" class="fixed inset-0 bg-gray-950 z-50 flex items-center justify-center p-4">
-        <div class="glass-card p-6 rounded-3xl w-full max-w-xs space-y-5 text-center shadow-2xl border border-gray-800">
+        <div class="glass-card p-6 rounded-3xl w-full max-w-xs space-y-4 text-center shadow-2xl border border-gray-800">
             <div class="w-16 h-16 bg-blue-600/20 text-blue-400 rounded-2xl flex items-center justify-center mx-auto border border-blue-500/30 text-2xl shadow-inner">
                 <i class="fa-solid fa-shield-halved"></i>
             </div>
@@ -31,14 +31,17 @@
             <div class="space-y-3 text-left">
                 <div>
                     <label class="text-[10px] text-gray-400 font-bold block mb-1 uppercase tracking-wider">Usuario</label>
-                    <input type="text" id="loginUser" value="admin" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-500 transition">
+                    <input type="text" id="loginUser" value="admin" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-500">
                 </div>
                 <div>
                     <label class="text-[10px] text-gray-400 font-bold block mb-1 uppercase tracking-wider">Contraseña</label>
-                    <input type="password" id="loginPass" value="1234" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-500 transition">
+                    <input type="password" id="loginPass" value="1234" class="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-500">
                 </div>
-                <button type="button" onclick="ejecutarLoginDirecto()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-xs py-3 rounded-xl shadow-lg transition active:scale-95">
-                    INICIAR SESIÓN
+                <button type="button" onclick="entrarSistema('admin')" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black text-xs py-3 rounded-xl shadow-lg active:scale-95 transition">
+                    ENTRAR COMO ADMINISTRADOR
+                </button>
+                <button type="button" onclick="entrarSistema('analista')" class="w-full bg-gray-800 hover:bg-gray-700 text-blue-300 font-bold text-xs py-2.5 rounded-xl border border-gray-700 transition">
+                    Entrar como Analista
                 </button>
             </div>
         </div>
@@ -223,13 +226,9 @@
         let usuarioLogueado = null;
         let clienteActivo = null;
 
-        // LOGIN DIRECTO POR CLIC (EVITA PROBLEMAS CON SUBMIT DE FORMULARIOS MÓVILES)
-        function ejecutarLoginDirecto() {
-            let uVal = document.getElementById('loginUser').value.trim().toLowerCase();
-            let pVal = document.getElementById('loginPass').value.trim();
-
-            let encontrado = usuarios.find(x => x.user.toLowerCase() === uVal && x.pass === pVal);
-
+        // ACCESO DIRECTO GARANTIZADO POR ROL
+        function entrarSistema(rolSeleccionado) {
+            let encontrado = usuarios.find(x => x.rol === rolSeleccionado);
             if (encontrado) {
                 usuarioLogueado = encontrado;
                 document.getElementById('loginScreen').classList.add('hidden');
@@ -246,14 +245,12 @@
                 initChart();
                 switchTab('scorecard');
             } else {
-                alert('Usuario o contraseña incorrectos. Verifique sus datos.');
+                alert('Error al cargar perfil.');
             }
         }
 
         function cerrarSesion() {
             usuarioLogueado = null;
-            document.getElementById('loginUser').value = 'admin';
-            document.getElementById('loginPass').value = '1234';
             document.getElementById('loginScreen').classList.remove('hidden');
             switchTab('scorecard');
         }
@@ -289,4 +286,6 @@
         }
 
         function renderClientes() {
-            let cont = document.getElementById('listaClientesCo
+            let cont = document.getElementById('listaClientesContainer');
+            let q = document.getElementById('searchClientInput').value.toLowerCase();
+            let list = clientes.filter(c => c.nombre.toLowerCase
