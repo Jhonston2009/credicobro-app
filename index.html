@@ -3,31 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestor de cobro - Matagalpa</title>
+    <title>FastMoney - Matagalpa</title>
     
-    <!-- Librerías Externas -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Archivo de Estilos Modulares -->
     <link rel="stylesheet" href="styles.css">
     <link rel="manifest" href="./manifest.json">
     
-    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
 </head>
 <body class="pb-24 font-sans select-none antialiased">
 
-    <!-- PANTALLA DE AUTENTICACIÓN / LOGIN -->
+    <!-- LOGIN -->
     <div id="loginScreen" class="fixed inset-0 bg-gray-950 z-50 flex items-center justify-center p-4">
         <div class="glass-card p-6 rounded-3xl w-full max-w-xs space-y-4 text-center shadow-2xl border border-gray-800">
             <div class="w-16 h-16 bg-blue-600/20 text-blue-400 rounded-2xl flex items-center justify-center mx-auto border border-blue-500/30 text-2xl shadow-inner">
-                <i class="fa-solid fa-shield-halved"></i>
+                <i class="fa-solid fa-money-bill-wave"></i>
             </div>
             <div>
-                <h2 class="text-xl font-black text-white tracking-wide">CrediCobro Pro</h2>
+                <h2 class="text-xl font-black text-white tracking-wide">FastMoney</h2>
                 <p class="text-xs text-gray-400 mt-1">Gestión de Crédito y Cobranza</p>
             </div>
             <div class="space-y-3 text-left">
@@ -46,11 +43,11 @@
         </div>
     </div>
 
-    <!-- HEADER SUPERIOR PRINCIPAL -->
+    <!-- HEADER -->
     <header class="bg-gray-900/90 border-b border-gray-800 p-4 sticky top-0 z-40 flex justify-between items-center backdrop-blur-md">
         <div>
             <h1 class="font-black text-lg bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent flex items-center gap-2">
-                <i class="fa-solid fa-wallet text-blue-500"></i> CrediCobro Pro
+                <i class="fa-solid fa-wallet text-blue-500"></i> FastMoney
             </h1>
             <p class="text-[10px] text-gray-400" id="roleText">Sesión no iniciada</p>
         </div>
@@ -204,15 +201,14 @@
                 <div><span class="text-[10px] text-gray-400 block font-bold">Saldo</span><strong id="kdSaldo" class="text-base font-black text-blue-400">C$ 0.00</strong></div>
                 <div class="text-right"><span class="text-[10px] text-gray-400 block font-bold">Cuota</span><strong id="kdCuotaValor" class="text-xs font-bold text-emerald-400">C$ 338.00</strong></div>
             </div>
-           <!-- SECCIÓN DE COBROS Y CARGOS -->
+
+            <!-- SECCIÓN DE COBROS Y CARGOS -->
             <div class="bg-emerald-900/20 border border-emerald-500/30 p-3 rounded-xl space-y-2">
-                
                 <!-- Fila 1: Input de Monto Libre y Botón Cobrar -->
                 <div class="flex gap-2">
                     <input type="number" id="inputAbonoMonto" placeholder="Monto C$" class="flex-1 bg-gray-900 border border-gray-800 p-2 rounded-lg text-xs text-white outline-none focus:border-emerald-500">
                     <button type="button" onclick="aplicarAbono()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-lg text-xs transition">Cobrar</button>
                 </div>
-                
                 <!-- Fila 2: Botones divididos en 2 columnas exactas -->
                 <div class="grid grid-cols-2 gap-2">
                     <button type="button" onclick="aplicarCuotaCompleta()" class="bg-gray-800 hover:bg-gray-700 text-emerald-400 font-bold py-2 rounded-lg text-[10px] transition">
@@ -222,17 +218,17 @@
                         <i class="fa-solid fa-plus"></i> Nuevo Cargo
                     </button>
                 </div>
-
             </div>
+
             <div>
                 <h4 class="text-[10px] font-bold text-gray-400 uppercase mb-1">Ticket PT210</h4>
                 <pre id="ticketPreviewBox" class="bg-gray-950 text-emerald-400 font-mono text-[9px] p-2.5 rounded-xl border border-gray-800">Recibo...</pre>
             </div>
             <div>
                 <h4 class="text-[10px] font-bold text-gray-400 uppercase mb-1">Historial</h4>
-                <div id="kdHistorial" class="space-y-1.5 text-[10px] max-h-24 overflow-y-auto"></div>
+                <div id="kdHistorial" class="space-y-1.5 text-[10px] max-h-24 overflow-y-auto custom-scrollbar"></div>
             </div>
-           <!-- Controles de Admin (Se ocultan para Analistas) -->
+
             <div id="kardexAdminActions" class="pt-2 border-t border-gray-800 flex gap-2 hidden">
                 <button type="button" onclick="abrirModalEditar()" class="flex-1 bg-amber-600 text-white font-bold text-[10px] py-2 rounded-xl">Editar Datos</button>
                 <button type="button" onclick="eliminarCliente()" class="flex-1 bg-red-600 text-white font-bold text-[10px] py-2 rounded-xl">Eliminar Cliente</button>
@@ -240,7 +236,6 @@
         </div>
     </div>
 
-    <!-- Carga del archivo modular JavaScript -->
     <!-- MODAL EDITAR CLIENTE -->
     <div id="modalEditarCliente" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
         <div class="glass-modal rounded-2xl w-full max-w-xs p-4 space-y-3">
@@ -261,8 +256,8 @@
             </form>
         </div>
     </div>
-    <script src="app.js"></script>
-        <!-- MODAL NUEVO CARGO / REFINANCIAMIENTO -->
+
+    <!-- MODAL NUEVO CARGO / REFINANCIAMIENTO -->
     <div id="modalNuevoCargo" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
         <div class="glass-modal rounded-2xl w-full max-w-xs p-4 space-y-3">
             <div class="flex justify-between items-center border-b border-gray-800 pb-2">
@@ -310,6 +305,33 @@
             </form>
         </div>
     </div>
+
+    <!-- MODAL ALERTA PERSONALIZADA -->
+    <div id="modalAlerta" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl w-full max-w-[260px] p-5 space-y-3 text-center border border-gray-700 shadow-2xl">
+            <div id="alertaIcono" class="mx-auto w-12 h-12 flex items-center justify-center rounded-full text-2xl mb-2"></div>
+            <h3 id="alertaTitulo" class="text-sm font-black text-white uppercase tracking-wider">Aviso</h3>
+            <p id="alertaMensaje" class="text-xs text-gray-300"></p>
+            <button type="button" onclick="cerrarAlerta()" id="alertaBtn" class="w-full font-bold py-2.5 rounded-xl transition mt-2">Aceptar</button>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIRMACION PERSONALIZADA -->
+    <div id="modalConfirm" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center p-4">
+        <div class="glass-modal rounded-3xl w-full max-w-[260px] p-5 space-y-3 text-center border border-gray-700 shadow-2xl">
+            <div class="mx-auto w-12 h-12 flex items-center justify-center rounded-full bg-red-500/20 text-red-500 border border-red-500/30 text-2xl mb-2">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="text-sm font-black text-white uppercase tracking-wider">¿Estás seguro?</h3>
+            <p id="confirmMensaje" class="text-xs text-gray-300"></p>
+            <div class="flex gap-2 mt-4">
+                <button type="button" onclick="cerrarConfirm()" class="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold py-2.5 rounded-xl transition text-xs">Cancelar</button>
+                <button type="button" onclick="ejecutarConfirmacion()" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 rounded-xl transition text-xs">Aceptar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
     <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./pwabuilder-sw.js'); }</script>
 </body>
 </html>
