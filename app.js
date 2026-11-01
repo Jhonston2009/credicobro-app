@@ -409,4 +409,47 @@ function abrirModalEditar() {
 }
 
 function cerrarModalEditar() {
-    document.getElementById('modalEditarCliente').classList.add
+    document.getElementById('modalEditarCliente').classList.add('hidden');
+    abrirKardex(clienteActivo.id); 
+}
+
+function guardarEdicionCliente(e) {
+    e.preventDefault();
+    const nombre = document.getElementById('editCliNombre').value.trim();
+    const cedula = document.getElementById('editCliCedula').value.trim();
+    const tel = document.getElementById('editCliTel').value.trim();
+    const dir = document.getElementById('editCliDireccion').value.trim();
+    const fechaPagoRaw = document.getElementById('editCliFechaPago').value;
+    
+    let updateData = {
+        nombre: nombre,
+        cedula: cedula,
+        telefono: tel,
+        direccion: dir
+    };
+
+    if (fechaPagoRaw) {
+        const [y, m, d] = fechaPagoRaw.split('-');
+        updateData.fecha2 = `Próx. pago: ${d}/${m}/${y}`;
+        updateData.fechaPagoRaw = fechaPagoRaw;
+    }
+
+    db.collection("clientes").doc(clienteActivo.id).update(updateData).then(() => {
+        alert('Perfil actualizado correctamente.');
+        document.getElementById('modalEditarCliente').classList.add('hidden');
+    }).catch(err => alert('Error: ' + err));
+}
+
+function filtrarClientes() { renderClientes(); }
+function abrirModalNuevoCliente() { document.getElementById('modalNuevoCliente').classList.remove('hidden'); }
+function cerrarModalNuevoCliente() { document.getElementById('modalNuevoCliente').classList.add('hidden'); }
+function cerrarKardex() { document.getElementById('modalKardex').classList.add('hidden'); }
+function imprimirReciboBT() {
+    if (!clienteActivo) return alert('Seleccione un cliente');
+    alert(`Imprimiendo ticket Bluetooth PT210 para ${clienteActivo.nombre}...`);
+}
+
+// Iniciar procesos que dependen de que la página ya esté cargada
+window.onload = () => {
+    calcularSimulacion();
+};
