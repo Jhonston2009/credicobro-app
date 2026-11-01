@@ -307,9 +307,66 @@ function abrirKardex(id) {
     document.getElementById('btnWhatsapp').href = `https://wa.me/505${clienteActivo.telefono}?text=Hola%20${encodeURIComponent(clienteActivo.nombre)},%20le%20recordamos%20su%20pago.`;
     document.getElementById('btnMapa').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clienteActivo.direccion + ', Matagalpa')}`;
 
+    // LÓGICA DE ROLES: Mostrar u ocultar acciones de edición/eliminación
+    let adminActions = document.getElementById('kardexAdminActions');
+    if (usuarioLogueado.rol === 'admin') {
+        adminActions.classList.remove('hidden');
+    } else {
+        adminActions.classList.add('hidden');
+    }
+
     actualizarTicketPreview(0);
     renderHistorialKardex();
     document.getElementById('modalKardex').classList.remove('hidden');
+}
+
+// 8. FUNCIONES DE EDICIÓN Y ELIMINACIÓN (SOLO ADMIN)
+function eliminarCliente() {
+    if (confirm(`¿Eliminar definitivamente a ${clienteActivo.nombre}? Esta acción borra todo su historial de Firebase y no se puede deshacer.`)) {
+        db.collection("clientes").doc(clienteActivo.id).delete().then(() => {
+            alert('Cliente eliminado de la base de datos.');
+            cerrarKardex();
+        }).catch(err => alert('Error: ' + err));
+    }
+}
+
+function abrirModalEditar() {
+    document.getElementById('editCliNombre').value = clienteActivo.nombre;
+    document.getElementById('editCliCedula').value = clienteActivo.cedula;
+    document.getElementById('editCliTel').value = clienteActivo.telefono;
+    document.getElementById('editCliDireccion').value = clienteActivo.direccion;
+    document.getElementById('editCliFechaPago').value = clienteActivo.fechaPagoRaw || '';
+    
+    cerrarKardex(); // Ocultar Kardex momentáneamente
+    document.getElementById('modalEditarCliente').classList.remove('hidden');
+}
+
+function cerrarModalEditar() {
+    document.getElementById('modalEditarCliente').classList.add('hidden');
+    abrirKardex(clienteActivo.id); // Volver al Kardex
+}
+
+function guardarEdicionCliente(e) {
+    e.preventDefault();
+    const nombre = document.getElementById('editCliNombre').value.trim();
+    const cedula = document.getElementById('editCliCedula').value.trim();
+    const tel = document.getElementById('editCliTel').value.trim();
+    const dir = document.getElementById('editCliDireccion').value.trim();
+    const fechaPagoRaw = document.getElementById('editCliFechaPago').value;
+    const [y, m, d] = fechaPagoRaw.split('-');
+
+    db.collection("clientes").doc(clienteActivo.id).update({
+        nombre: nombre,
+        cedula: cedula,
+        telefono: tel,
+        direccion: dir,
+        fecha2: `Próx. pago: ${d}/${m}/${y}`,
+        fechaPagoRaw: fechaPagoRaw
+    }).then(() => {
+        alert('Perfil actualizado correctamente.');
+        document.getElementById('modalEditarCliente').classList.add('hidden');
+        // Firebase onSnapshot actualizará la lista principal automáticamente
+    }).catch(err => alert('Error: ' + err));
 }
 
 function actualizarTicketPreview(montoAbonado) {
