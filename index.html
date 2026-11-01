@@ -74,26 +74,29 @@
         </button>
     </nav>
 
-    <!-- CONTENEDOR PRINCIPAL -->
-    <main class="p-4 max-w-md mx-auto space-y-4">
-       <section id="tab-scorecard" class="space-y-4">
-            <div class="glass-card p-4 rounded-2xl flex justify-between items-center shadow-lg">
-                <div>
-                    <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Cartera Total Activa</span>
-                    <h2 class="text-xl font-black text-white" id="totalCarteraDisplay">C$ 738,991.00</h2>
-                </div>
-                <span class="bg-emerald-500/20 text-emerald-400 text-xs px-2.5 py-1 rounded-full border border-emerald-500/30 font-bold">40 Cuotas Fijas</span>
-            </div>
-
-            <div class="glass-card p-4 rounded-2xl space-y-3">
-                <h3 class="text-xs font-bold text-gray-300">Distribución de Cartera por Estado</h3>
-                <!-- Contenedor de la gráfica -->
-                <div class="relative w-44 h-44 mx-auto">
-                    <canvas id="scoreChart"></canvas>
+  <!-- SCORECARD Y LISTA DE RUTA -->
+        <section id="tab-scorecard" class="space-y-4">
+            <!-- Tarjeta Superior: Gráfica, Total y Leyenda de Colores -->
+            <div class="glass-card p-4 rounded-2xl shadow-lg">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-28 h-28 relative">
+                        <canvas id="scoreChart"></canvas>
+                    </div>
+                    <div class="flex-1 pl-4 text-right">
+                        <h2 class="text-xl font-black text-white" id="totalCarteraDisplay">C$ 0.00</h2>
+                        <p class="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Cartera Total</p>
+                    </div>
                 </div>
                 
                 <!-- Historial de colores y estados -->
-                <div id="scorecardHistorial" class="pt-3 space-y-2 text-xs">
+                <div id="scorecardHistorial" class="pt-3 border-t border-gray-800 space-y-1.5 text-xs">
+                    <!-- Se inyecta con JavaScript -->
+                </div>
+            </div>
+
+            <!-- Lista de clientes idéntica a la imagen -->
+            <div class="glass-card rounded-2xl overflow-hidden">
+                <div id="scorecardClientList" class="divide-y divide-gray-800">
                     <!-- Se inyecta con JavaScript -->
                 </div>
             </div>
@@ -485,58 +488,64 @@ NUEVO SALDO:    ${salStr}
             `).join('');
         }
 
-       let chart;
+  let chart;
         function initChart() {
             let ctx = document.getElementById('scoreChart').getContext('2d');
             if (chart) chart.destroy();
 
-            // Configuración de Estados según solicitud
-            const estados = ['Al Corriente', 'Al Día (Pagado)', 'Cobros del Día', 'Alerta (Mora)'];
-            const colores = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']; // Azul, Verde, Amarillo, Rojo
-            const montos = [30340, 13990, 29423, 56697]; // Valores de ejemplo
-            const descripciones = [
-                'Clientes regulares sin atraso',
-                'Cuotas ya cobradas y pagadas',
-                'Ruta de cobros para hoy',
-                'Clientes atrasados / Mora'
-            ];
+            const estados = ['Mora (Alerta)', 'Para Hoy', 'Al Día (Pagado)', 'Al Corriente'];
+            const colores = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6']; 
+            const montos = [56697, 13990, 13990, 30340]; // Valores de ejemplo para la gráfica
 
-            // Renderizar la gráfica con animación de giro
             chart = new Chart(ctx, {
-                type: 'doughnut',
+                type: 'pie',
                 data: {
                     labels: estados,
                     datasets: [{
                         data: montos,
                         backgroundColor: colores,
-                        borderWidth: 0,
-                        hoverOffset: 4
+                        borderWidth: 0
                     }]
                 },
                 options: { 
-                    plugins: { legend: { display: false } }, 
-                    cutout: '72%',
-                    animation: {
-                        animateRotate: true, // Hace que el pastel gire al abrir la pestaña
-                        animateScale: true,
-                        duration: 1500, // Duración del giro en milisegundos
-                        easing: 'easeOutQuart'
-                    }
+                    plugins: { legend: { display: false } },
+                    animation: { animateRotate: true, duration: 1200 }
                 }
             });
 
-            // Renderizar el historial debajo de la gráfica
-            let contenedorHistorial = document.getElementById('scorecardHistorial');
-            contenedorHistorial.innerHTML = estados.map((estado, i) => `
-                <div class="bg-gray-900/60 p-2.5 rounded-xl border border-gray-800 flex justify-between items-center">
-                    <div class="flex items-center gap-2.5">
-                        <span class="w-3 h-3 rounded-full shadow-[0_0_8px_${colores[i]}]" style="background-color: ${colores[i]}"></span>
-                        <div>
-                            <strong class="text-white block">${estado}</strong>
-                            <span class="text-[9px] text-gray-400">${descripciones[i]}</span>
-                        </div>
+            // 1. Inyectar la leyenda de colores debajo del pastel
+            document.getElementById('scorecardHistorial').innerHTML = estados.map((estado, i) => `
+                <div class="flex justify-between items-center bg-gray-900/40 p-2 rounded-lg">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full" style="background-color: ${colores[i]}"></span>
+                        <span class="text-white text-[10px] font-bold">${estado}</span>
                     </div>
-                    <span class="text-xs font-black" style="color: ${colores[i]}">C$ ${montos[i].toLocaleString('es-NI')}</span>
+                    <span class="text-[10px] font-black" style="color: ${colores[i]}">C$ ${montos[i].toLocaleString('es-NI')}</span>
+                </div>
+            `).join('');
+
+            // 2. Actualizar el saldo total superior
+            let total = clientes.reduce((acc, curr) => acc + curr.saldo, 0);
+            document.getElementById('totalCarteraDisplay').innerText = `C$ ${total.toLocaleString('es-NI', {minimumFractionDigits:2})}`;
+            
+            // 3. Renderizar la lista de clientes
+            renderScorecardList();
+        }
+
+        function renderScorecardList() {
+            let cont = document.getElementById('scorecardClientList');
+            cont.innerHTML = clientes.map(c => `
+                <div onclick="abrirKardex(${c.id})" class="p-3 flex justify-between items-center ${c.pagado ? 'bg-emerald-900/30' : 'bg-transparent'} hover:bg-gray-800 transition cursor-pointer">
+                    <div class="flex flex-col">
+                        <strong class="text-white text-[11px] font-black tracking-wide">${c.nombre}</strong>
+                        <span class="text-[10px] text-gray-300 mt-1">${c.fecha1}</span>
+                        <span class="text-[9px] text-gray-500 italic">${c.fecha2}</span>
+                    </div>
+                    <div class="flex flex-col items-end text-right">
+                        <strong class="text-white text-[11px] font-black">NIO ${c.saldo.toLocaleString('es-NI', {minimumFractionDigits:2})}</strong>
+                        <span class="text-[10px] text-gray-300 mt-0.5">${c.cuota.toLocaleString('es-NI', {minimumFractionDigits:2})}</span>
+                        <span class="text-[9px] mt-1 px-2 py-0.5 rounded font-bold ${c.badgeColor}">${c.badgeText}</span>
+                    </div>
                 </div>
             `).join('');
         }
