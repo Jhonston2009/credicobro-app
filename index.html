@@ -168,7 +168,7 @@
                 <h3 class="text-xs font-bold text-blue-400 uppercase"><i class="fa-solid fa-user-plus"></i> Registrar Nuevo Cliente</h3>
                 <button type="button" onclick="cerrarModalNuevoCliente()" class="text-gray-400 font-bold text-lg">&times;</button>
             </div>
-            <form id="formNuevoCliente" onsubmit="guardarNuevoCliente(event)" class="space-y-2 text-xs">
+  <form id="formNuevoCliente" onsubmit="guardarNuevoCliente(event)" class="space-y-2 text-xs">
                 <input type="text" id="cliNombre" placeholder="Nombre Completo" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
                 <input type="text" id="cliCedula" placeholder="Cédula (441-120588-0003K)" required pattern="^[0-9]{3}-[0-9]{6}-[0-9]{4}[A-Za-z]$" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
                 <input type="text" id="cliTel" placeholder="Teléfono" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
@@ -184,6 +184,12 @@
                         <label class="text-[10px] text-gray-400 font-bold block mb-1">Plazo (Cuotas)</label>
                         <input type="number" id="cliPlazo" placeholder="Ej. 40" value="40" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
                     </div>
+                </div>
+
+                <!-- NUEVO CAMPO DE FECHA -->
+                <div>
+                    <label class="text-[10px] text-gray-400 font-bold block mb-1">Próxima Fecha de Pago</label>
+                    <input type="date" id="cliFechaPago" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
                 </div>
 
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-lg transition mt-2">Crear y Aprobar Préstamo</button>
@@ -334,6 +340,11 @@
             const monto = parseFloat(document.getElementById('cliMonto').value);
             const interesDecimal = parseFloat(document.getElementById('cliInteres').value) / 100;
             const plazo = parseInt(document.getElementById('cliPlazo').value);
+            
+            // Capturar y formatear la nueva fecha
+            const fechaPagoRaw = document.getElementById('cliFechaPago').value;
+            const [year, month, day] = fechaPagoRaw.split('-');
+            const fechaPagoFormat = `${day}/${month}/${year}`;
 
             let comision = 200;
             if (monto >= 10000 && monto < 15000) comision = 400;
@@ -345,7 +356,7 @@
             let totalPagar = financiado * (1 + interesDecimal);
             let cuota = totalPagar / plazo;
 
-            // Enviar a la base de datos
+            // Enviar a Firebase
             db.collection("clientes").add({
                 nombre: nombre,
                 cedula: cedula,
@@ -353,8 +364,8 @@
                 direccion: dir,
                 saldo: totalPagar,
                 cuota: cuota,
-                fecha1: new Date().toLocaleDateString('es-NI'),
-                fecha2: 'Crédito Nuevo',
+                fecha1: new Date().toLocaleDateString('es-NI'), // Fecha en que se creó el crédito
+                fecha2: `Próx. pago: ${fechaPagoFormat}`, // Fecha asignada desde el formulario
                 badgeText: 'Al Día',
                 badgeColor: 'bg-emerald-400 text-black',
                 pagado: false,
