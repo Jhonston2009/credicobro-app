@@ -16,8 +16,62 @@ let clientes = [];
 let usuarioLogueado = null;
 let clienteActivo = null;
 let chart;
+let confirmCallback = null;
 
-// 2. UTILIDADES DE CÁLCULO
+// 2. SISTEMA DE ALERTAS PERSONALIZADAS
+function mostrarAlerta(mensaje, tipo = 'info') {
+    const modal = document.getElementById('modalAlerta');
+    const icono = document.getElementById('alertaIcono');
+    const titulo = document.getElementById('alertaTitulo');
+    const msj = document.getElementById('alertaMensaje');
+    const boton = document.getElementById('alertaBtn');
+
+    msj.innerText = mensaje;
+
+    if (tipo === 'error') {
+        icono.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
+        icono.className = 'mx-auto w-12 h-12 flex items-center justify-center rounded-full text-2xl mb-2 bg-red-500/20 text-red-500 border border-red-500/30';
+        titulo.innerText = 'Error';
+        titulo.className = 'text-sm font-black text-red-400 uppercase tracking-wider';
+        boton.className = 'w-full bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 rounded-xl transition mt-2 text-xs';
+    } else if (tipo === 'success') {
+        icono.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+        icono.className = 'mx-auto w-12 h-12 flex items-center justify-center rounded-full text-2xl mb-2 bg-emerald-500/20 text-emerald-500 border border-emerald-500/30';
+        titulo.innerText = 'Éxito';
+        titulo.className = 'text-sm font-black text-emerald-400 uppercase tracking-wider';
+        boton.className = 'w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl transition mt-2 text-xs';
+    } else {
+        icono.innerHTML = '<i class="fa-solid fa-circle-info"></i>';
+        icono.className = 'mx-auto w-12 h-12 flex items-center justify-center rounded-full text-2xl mb-2 bg-blue-500/20 text-blue-500 border border-blue-500/30';
+        titulo.innerText = 'Información';
+        titulo.className = 'text-sm font-black text-blue-400 uppercase tracking-wider';
+        boton.className = 'w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl transition mt-2 text-xs';
+    }
+
+    modal.classList.remove('hidden');
+}
+
+function cerrarAlerta() {
+    document.getElementById('modalAlerta').classList.add('hidden');
+}
+
+function mostrarConfirmacion(mensaje, callback) {
+    document.getElementById('confirmMensaje').innerText = mensaje;
+    confirmCallback = callback;
+    document.getElementById('modalConfirm').classList.remove('hidden');
+}
+
+function cerrarConfirm() {
+    document.getElementById('modalConfirm').classList.add('hidden');
+    confirmCallback = null;
+}
+
+function ejecutarConfirmacion() {
+    if (confirmCallback) confirmCallback();
+    cerrarConfirm();
+}
+
+// 3. UTILIDADES DE CÁLCULO
 function obtenerEstado(fechaRaw) {
     if (!fechaRaw) return { idx: 0, nombre: 'Al Corriente', color: '#9ca3af', badge: 'bg-gray-500 text-white' }; 
     let hoy = new Date();
@@ -35,7 +89,7 @@ function obtenerEstado(fechaRaw) {
     return { idx: 4, nombre: 'Alerta (Mora)', color: '#ef4444', badge: 'bg-red-500 text-white' };
 }
 
-// 3. ESCUCHAR DATOS DESDE LA NUBE
+// 4. ESCUCHAR DATOS DESDE LA NUBE
 db.collection("usuarios").onSnapshot((snapshot) => {
     usuarios = [];
     snapshot.forEach((doc) => usuarios.push({ id: doc.id, ...doc.data() }));
@@ -53,25 +107,23 @@ db.collection("clientes").onSnapshot((snapshot) => {
 
 function procesarCarteraLocal() {
     if (!usuarioLogueado) return;
-    
     if (usuarioLogueado.rol === 'admin') {
         clientes = todosLosClientes; 
     } else {
         clientes = todosLosClientes.filter(c => c.creadorUser === usuarioLogueado.user);
     }
-    
     renderClientes();
     renderScorecardList();
     initChart();
 }
 
-// 4. FUNCIONES DE SESIÓN E INTERFAZ
+// 5. FUNCIONES DE SESIÓN E INTERFAZ
 function entrarSistema() {
     let inputUser = document.getElementById('loginUser').value.trim();
     let inputPass = document.getElementById('loginPass').value.trim();
     
     if(usuarios.length === 0) {
-        alert('Cargando base de datos segura... Da clic de nuevo en 2 segundos.');
+        mostrarAlerta('Cargando base de datos. Da clic de nuevo en 2 segundos.', 'info');
         return;
     }
 
@@ -93,10 +145,9 @@ function entrarSistema() {
 
         procesarCarteraLocal();
         if (encontrado.rol === 'admin') renderUsuarios();
-        
         switchTab('scorecard');
     } else {
-        alert('Credenciales incorrectas.');
+        mostrarAlerta('Credenciales incorrectas.', 'error');
     }
 }
 
@@ -109,7 +160,7 @@ function cerrarSesion() {
 
 function switchTab(id) {
     if (usuarioLogueado && usuarioLogueado.rol === 'analista' && id === 'personal') {
-        alert('Acceso restringido.');
+        mostrarAlerta('Acceso restringido a este módulo.', 'error');
         return;
     }
     ['scorecard', 'clientes', 'personal', 'simulador'].forEach(t => {
@@ -121,7 +172,7 @@ function switchTab(id) {
     if (id === 'scorecard') initChart();
 }
 
-// 5. MÉTODOS DE GUARDADO (FIREBASE)
+// 6. MÉTODOS DE GUARDADO (FIREBASE)
 function guardarNuevoCliente(e) {
     e.preventDefault();
     const nombre = document.getElementById('cliNombre').value.trim();
@@ -162,13 +213,13 @@ function guardarNuevoCliente(e) {
     }).then(() => {
         document.getElementById('formNuevoCliente').reset();
         cerrarModalNuevoCliente();
-        alert('¡Préstamo guardado!');
-    }).catch(err => alert('Error: ' + err));
+        mostrarAlerta('¡Préstamo guardado y sincronizado!', 'success');
+    }).catch(err => mostrarAlerta('Error: ' + err, 'error'));
 }
 
 function aplicarAbono() {
     let m = parseFloat(document.getElementById('inputAbonoMonto').value);
-    if (!m || m <= 0) return alert('Ingrese un monto válido');
+    if (!m || m <= 0) return mostrarAlerta('Ingrese un monto válido mayor a cero', 'error');
 
     let nuevoSaldo = clienteActivo.saldo - m;
     let nuevoHistorial = [...(clienteActivo.historial || [])];
@@ -180,13 +231,13 @@ function aplicarAbono() {
         pagado: (nuevoSaldo <= 0)
     }).then(() => {
         document.getElementById('inputAbonoMonto').value = '';
-        alert(`Abono sincronizado.`);
+        mostrarAlerta(`Abono de C$ ${m.toFixed(2)} sincronizado exitosamente.`, 'success');
         clienteActivo.saldo = nuevoSaldo;
         clienteActivo.historial = nuevoHistorial;
         document.getElementById('kdSaldo').innerText = `C$ ${clienteActivo.saldo.toFixed(2)}`;
         actualizarTicketPreview(m);
         renderHistorialKardex();
-    }).catch(err => alert('Error: ' + err));
+    }).catch(err => mostrarAlerta('Error: ' + err, 'error'));
 }
 
 function aplicarCuotaCompleta() {
@@ -203,12 +254,12 @@ function guardarUsuario(e) {
         pass: document.getElementById('usrPass').value.trim(),
         rol: document.getElementById('usrRol').value
     }).then(() => {
-        alert('Usuario registrado.');
+        mostrarAlerta('Nuevo usuario registrado en la base de datos.', 'success');
         e.target.reset();
-    }).catch(err => alert('Error: ' + err));
+    }).catch(err => mostrarAlerta('Error: ' + err, 'error'));
 }
 
-// 6. ACTUALIZACIONES VISUALES
+// 7. ACTUALIZACIONES VISUALES
 function initChart() {
     let ctx = document.getElementById('scoreChart').getContext('2d');
     if (chart) chart.destroy();
@@ -310,7 +361,6 @@ function renderHistorialKardex() {
         return;
     }
     cont.innerHTML = clienteActivo.historial.map(h => {
-        // Si el monto es negativo, es un Cargo (Préstamo)
         if (h.monto < 0) {
             return `
             <div class="flex justify-between items-center border-b border-gray-800 pb-1">
@@ -321,7 +371,6 @@ function renderHistorialKardex() {
                 <strong class="text-orange-500">+ C$ ${Math.abs(h.monto).toFixed(2)}</strong>
             </div>`;
         } else {
-            // Si el monto es positivo, es un Abono regular
             return `
             <div class="flex justify-between items-center border-b border-gray-800 pb-1">
                 <span class="text-gray-400">${h.fecha}</span>
@@ -331,7 +380,7 @@ function renderHistorialKardex() {
     }).join('');
 }
 
-// 7. CONTROLES DEL MODAL KARDEX Y SIMULADOR
+// 8. CONTROLES DE KARDEX Y SIMULADOR
 function abrirKardex(id) {
     clienteActivo = clientes.find(c => c.id === id);
     if (!clienteActivo) return;
@@ -365,10 +414,10 @@ function actualizarTicketPreview(montoAbonado) {
     let salStr = (`C$ ${clienteActivo.saldo.toFixed(2)}`).padStart(14);
     document.getElementById('ticketPreviewBox').innerText = 
 `================================
-     CRÉDITOS Y COBRANZAS       
+         FASTMONEY PRO       
      MATAGALPA - NICARAGUA      
 ================================
-RECIBO DE PAGO:  #REC-${Date.now().toString().slice(-6)}
+RECIBO PAGO:     #REC-${Date.now().toString().slice(-6)}
 --------------------------------
 CLIENTE: ${nom}
 --------------------------------
@@ -401,14 +450,14 @@ function calcularSimulacion() {
     document.getElementById('simCuota').textContent = `C$ ${cuotaEfectiva.toFixed(2)}`;
 }
 
-// 8. FUNCIONES DE EDICIÓN Y ELIMINACIÓN (SOLO ADMIN)
+// 9. EDICIÓN, ELIMINACIÓN Y NUEVOS CARGOS (REFINANCIAMIENTO)
 function eliminarCliente() {
-    if (confirm(`¿Eliminar definitivamente a ${clienteActivo.nombre}? Esta acción borra todo su historial y no se puede deshacer.`)) {
+    mostrarConfirmacion(`¿Eliminar definitivamente a ${clienteActivo.nombre}? Esta acción borra todo su historial de cobros y no se puede deshacer.`, () => {
         db.collection("clientes").doc(clienteActivo.id).delete().then(() => {
-            alert('Cliente eliminado.');
+            mostrarAlerta('Cliente eliminado del sistema.', 'success');
             cerrarKardex();
-        }).catch(err => alert('Error: ' + err));
-    }
+        }).catch(err => mostrarAlerta('Error al eliminar: ' + err, 'error'));
+    });
 }
 
 function abrirModalEditar() {
@@ -435,12 +484,7 @@ function guardarEdicionCliente(e) {
     const dir = document.getElementById('editCliDireccion').value.trim();
     const fechaPagoRaw = document.getElementById('editCliFechaPago').value;
     
-    let updateData = {
-        nombre: nombre,
-        cedula: cedula,
-        telefono: tel,
-        direccion: dir
-    };
+    let updateData = { nombre: nombre, cedula: cedula, telefono: tel, direccion: dir };
 
     if (fechaPagoRaw) {
         const [y, m, d] = fechaPagoRaw.split('-');
@@ -449,22 +493,11 @@ function guardarEdicionCliente(e) {
     }
 
     db.collection("clientes").doc(clienteActivo.id).update(updateData).then(() => {
-        alert('Perfil actualizado correctamente.');
+        mostrarAlerta('Perfil actualizado correctamente.', 'success');
         document.getElementById('modalEditarCliente').classList.add('hidden');
-    }).catch(err => alert('Error: ' + err));
+    }).catch(err => mostrarAlerta('Error: ' + err, 'error'));
 }
 
-function filtrarClientes() { renderClientes(); }
-function abrirModalNuevoCliente() { document.getElementById('modalNuevoCliente').classList.remove('hidden'); }
-function cerrarModalNuevoCliente() { document.getElementById('modalNuevoCliente').classList.add('hidden'); }
-function cerrarKardex() { document.getElementById('modalKardex').classList.add('hidden'); }
-function imprimirReciboBT() {
-    if (!clienteActivo) return alert('Seleccione un cliente');
-    alert(`Imprimiendo ticket Bluetooth PT210 para ${clienteActivo.nombre}...`);
-}
-
-// Iniciar procesos que dependen de que la página ya esté cargada
-// 9. FUNCIONES PARA NUEVO CARGO / REFINANCIAMIENTO
 function abrirModalNuevoCargo() {
     document.getElementById('ncClienteNombre').innerText = clienteActivo.nombre;
     document.getElementById('ncSaldoActual').innerText = `C$ ${clienteActivo.saldo.toFixed(2)}`;
@@ -510,14 +543,13 @@ function calcularNuevoCargo() {
 function guardarNuevoCargo(e) {
     e.preventDefault();
     let montoAdicional = parseFloat(document.getElementById('ncMonto').value);
-    if (!montoAdicional || montoAdicional <= 0) return alert('Ingrese un monto válido mayor a 0');
+    if (!montoAdicional || montoAdicional <= 0) return mostrarAlerta('Ingrese un monto válido mayor a 0', 'error');
 
     let calcs = calcularNuevoCargo();
     const fechaPagoRaw = document.getElementById('ncFechaPago').value;
     const concepto = document.getElementById('ncConcepto').value.trim();
     const [y, m, d] = fechaPagoRaw.split('-');
 
-    // Registramos el cargo en negativo para que renderHistorial lo muestre en naranja
     let nuevoHistorial = [...(clienteActivo.historial || [])];
     nuevoHistorial.unshift({ fecha: new Date().toLocaleDateString('es-NI'), monto: -montoAdicional, nota: concepto });
 
@@ -529,18 +561,27 @@ function guardarNuevoCargo(e) {
         historial: nuevoHistorial,
         pagado: false
     }).then(() => {
-        alert('Cargo adicional aplicado y cuota recalculada.');
+        mostrarAlerta('Cargo adicional aplicado y cuota recalculada exitosamente.', 'success');
         document.getElementById('modalNuevoCargo').classList.add('hidden');
         
-        // Actualiza el Kardex localmente de inmediato
         clienteActivo.saldo = calcs.nuevoSaldoGlobal;
         clienteActivo.cuota = calcs.nuevaCuota;
         clienteActivo.historial = nuevoHistorial;
         if(fechaPagoRaw) clienteActivo.fechaPagoRaw = fechaPagoRaw;
         
-        abrirKardex(clienteActivo.id);
-    }).catch(err => alert('Error: ' + err));
+    }).catch(err => mostrarAlerta('Error: ' + err, 'error'));
 }
+
+// 10. UTILIDADES GLOBALES
+function filtrarClientes() { renderClientes(); }
+function abrirModalNuevoCliente() { document.getElementById('modalNuevoCliente').classList.remove('hidden'); }
+function cerrarModalNuevoCliente() { document.getElementById('modalNuevoCliente').classList.add('hidden'); }
+function cerrarKardex() { document.getElementById('modalKardex').classList.add('hidden'); }
+function imprimirReciboBT() {
+    if (!clienteActivo) return mostrarAlerta('Seleccione un cliente primero.', 'error');
+    mostrarAlerta(`Enviando ticket de ${clienteActivo.nombre} a la impresora Bluetooth PT210...`, 'info');
+}
+
 window.onload = () => {
     calcularSimulacion();
 };
