@@ -4,18 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CrediCobro Pro - Matagalpa</title>
+    
+    <!-- Librerías Externas -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body { background-color: #0b0f19; color: #f3f4f6; -webkit-tap-highlight-color: transparent; }
-        .glass-card { background: rgba(17, 24, 39, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .glass-modal { background: rgba(11, 15, 25, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.5); border-radius: 4px; }
-    </style>
+    
+    <!-- Archivo de Estilos Modulares -->
+    <link rel="stylesheet" href="styles.css">
     <link rel="manifest" href="./manifest.json">
+    
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
 </head>
@@ -76,9 +75,10 @@
         </button>
     </nav>
 
-  <!-- SCORECARD Y LISTA DE RUTA -->
+    <!-- CONTENEDOR PRINCIPAL -->
+    <main class="p-4 max-w-md mx-auto space-y-4">
+        <!-- SCORECARD -->
         <section id="tab-scorecard" class="space-y-4">
-            <!-- Tarjeta Superior: Gráfica, Total y Leyenda de Colores -->
             <div class="glass-card p-4 rounded-2xl shadow-lg">
                 <div class="flex items-center justify-between mb-4">
                     <div class="w-28 h-28 relative">
@@ -89,18 +89,10 @@
                         <p class="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Cartera Total</p>
                     </div>
                 </div>
-                
-                <!-- Historial de colores y estados -->
-                <div id="scorecardHistorial" class="pt-3 border-t border-gray-800 space-y-1.5 text-xs">
-                    <!-- Se inyecta con JavaScript -->
-                </div>
+                <div id="scorecardHistorial" class="pt-3 border-t border-gray-800 space-y-1.5 text-xs"></div>
             </div>
-
-            <!-- Lista de clientes idéntica a la imagen -->
             <div class="glass-card rounded-2xl overflow-hidden">
-                <div id="scorecardClientList" class="divide-y divide-gray-800">
-                    <!-- Se inyecta con JavaScript -->
-                </div>
+                <div id="scorecardClientList" class="divide-y divide-gray-800"></div>
             </div>
         </section>
 
@@ -168,13 +160,12 @@
                 <h3 class="text-xs font-bold text-blue-400 uppercase"><i class="fa-solid fa-user-plus"></i> Registrar Nuevo Cliente</h3>
                 <button type="button" onclick="cerrarModalNuevoCliente()" class="text-gray-400 font-bold text-lg">&times;</button>
             </div>
-  <form id="formNuevoCliente" onsubmit="guardarNuevoCliente(event)" class="space-y-2 text-xs">
+            <form id="formNuevoCliente" onsubmit="guardarNuevoCliente(event)" class="space-y-2 text-xs">
                 <input type="text" id="cliNombre" placeholder="Nombre Completo" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
                 <input type="text" id="cliCedula" placeholder="Cédula (441-120588-0003K)" required pattern="^[0-9]{3}-[0-9]{6}-[0-9]{4}[A-Za-z]$" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
                 <input type="text" id="cliTel" placeholder="Teléfono" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
                 <input type="text" id="cliDireccion" placeholder="Dirección / Comarca" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
                 <input type="number" id="cliMonto" placeholder="Monto Préstamo Solicitado" value="10000" step="1000" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
-                
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="text-[10px] text-gray-400 font-bold block mb-1">Interés (%)</label>
@@ -185,13 +176,10 @@
                         <input type="number" id="cliPlazo" placeholder="Ej. 40" value="40" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
                     </div>
                 </div>
-
-                <!-- NUEVO CAMPO DE FECHA -->
                 <div>
                     <label class="text-[10px] text-gray-400 font-bold block mb-1">Próxima Fecha de Pago</label>
                     <input type="date" id="cliFechaPago" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-blue-500">
                 </div>
-
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-lg transition mt-2">Crear y Aprobar Préstamo</button>
             </form>
         </div>
@@ -238,366 +226,8 @@
         </div>
     </div>
 
-   <!-- SCRIPT DE CONTROL CON FIREBASE EN TIEMPO REAL -->
-    <script>
-        // 1. INICIALIZAR FIREBASE
-        const firebaseConfig = {
-            apiKey: "AIzaSyCkcv1owsl4X3Vt-W-CYPP831k1SOU0gHQ",
-            authDomain: "gestor-de-cobro-cc6ee.firebaseapp.com",
-            projectId: "gestor-de-cobro-cc6ee",
-            storageBucket: "gestor-de-cobro-cc6ee.firebasestorage.app",
-            messagingSenderId: "85188432371",
-            appId: "1:85188432371:web:cc76df4b14fe9023d58286"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        let usuarios = [];
-        let clientes = [];
-        let usuarioLogueado = null;
-        let clienteActivo = null;
-
-        // 2. ESCUCHAR DATOS EN TIEMPO REAL DESDE LA NUBE
-        db.collection("usuarios").onSnapshot((snapshot) => {
-            usuarios = [];
-            snapshot.forEach((doc) => usuarios.push({ id: doc.id, ...doc.data() }));
-            
-            // Auto-crear Admin si la base está vacía
-            if (usuarios.length === 0) {
-                db.collection("usuarios").add({ nombre: 'Admin Principal', user: 'admin', pass: '1234', rol: 'admin', cedula: '000-000000-0000A' });
-            }
-            if (usuarioLogueado) renderUsuarios();
-        });
-
-        db.collection("clientes").onSnapshot((snapshot) => {
-            clientes = [];
-            snapshot.forEach((doc) => clientes.push({ id: doc.id, ...doc.data() }));
-            
-            if (usuarioLogueado) {
-                renderClientes();
-                renderScorecardList();
-                initChart(); 
-            }
-        });
-
-        // 3. FUNCIONES DE INTERFAZ Y SESIÓN
-        function entrarSistema() {
-            let inputUser = document.getElementById('loginUser').value.trim();
-            let inputPass = document.getElementById('loginPass').value.trim();
-            let encontrado = usuarios.find(x => x.user === inputUser && x.pass === inputPass);
-            
-            if (encontrado) {
-                usuarioLogueado = encontrado;
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('roleText').innerText = `Usuario: ${encontrado.nombre} (${encontrado.rol.toUpperCase()})`;
-                
-                if (encontrado.rol === 'analista') {
-                    document.getElementById('nav-personal').classList.add('hidden');
-                } else {
-                    document.getElementById('nav-personal').classList.remove('hidden');
-                }
-
-                document.getElementById('loginUser').value = '';
-                document.getElementById('loginPass').value = '';
-
-                renderClientes();
-                renderUsuarios();
-                renderScorecardList();
-                initChart();
-                switchTab('scorecard');
-            } else {
-                alert('Credenciales incorrectas. (Nota: Si es primera vez, usa admin y 1234)');
-            }
-        }
-
-        function cerrarSesion() {
-            usuarioLogueado = null;
-            document.getElementById('loginScreen').classList.remove('hidden');
-            switchTab('scorecard');
-        }
-
-        function switchTab(id) {
-            if (usuarioLogueado && usuarioLogueado.rol === 'analista' && id === 'personal') {
-                alert('Acceso restringido.');
-                return;
-            }
-            ['scorecard', 'clientes', 'personal', 'simulador'].forEach(t => {
-                document.getElementById('tab-' + t).classList.add('hidden');
-                document.getElementById('nav-' + t).classList.replace('text-blue-400', 'text-gray-400');
-            });
-            document.getElementById('tab-' + id).classList.remove('hidden');
-            document.getElementById('nav-' + id).classList.replace('text-gray-400', 'text-blue-400');
-            if (id === 'scorecard') initChart();
-        }
-
-        // 4. GUARDAR EN LA NUBE (FIREBASE)
-        function guardarNuevoCliente(e) {
-            e.preventDefault();
-            const nombre = document.getElementById('cliNombre').value.trim();
-            const cedula = document.getElementById('cliCedula').value.trim();
-            const tel = document.getElementById('cliTel').value.trim();
-            const dir = document.getElementById('cliDireccion').value.trim();
-            const monto = parseFloat(document.getElementById('cliMonto').value);
-            const interesDecimal = parseFloat(document.getElementById('cliInteres').value) / 100;
-            const plazo = parseInt(document.getElementById('cliPlazo').value);
-            
-            // Capturar y formatear la nueva fecha
-            const fechaPagoRaw = document.getElementById('cliFechaPago').value;
-            const [year, month, day] = fechaPagoRaw.split('-');
-            const fechaPagoFormat = `${day}/${month}/${year}`;
-
-            let comision = 200;
-            if (monto >= 10000 && monto < 15000) comision = 400;
-            else if (monto >= 15000 && monto < 25000) comision = 600;
-            else if (monto >= 25000 && monto < 50000) comision = 800;
-            else if (monto >= 50000) comision = 1200;
-
-            let financiado = monto + comision;
-            let totalPagar = financiado * (1 + interesDecimal);
-            let cuota = totalPagar / plazo;
-
-            // Enviar a Firebase
-            db.collection("clientes").add({
-                nombre: nombre,
-                cedula: cedula,
-                telefono: tel,
-                direccion: dir,
-                saldo: totalPagar,
-                cuota: cuota,
-                fecha1: new Date().toLocaleDateString('es-NI'), // Fecha en que se creó el crédito
-                fecha2: `Próx. pago: ${fechaPagoFormat}`, // Fecha asignada desde el formulario
-                badgeText: 'Al Día',
-                badgeColor: 'bg-emerald-400 text-black',
-                pagado: false,
-                historial: []
-            }).then(() => {
-                document.getElementById('formNuevoCliente').reset();
-                cerrarModalNuevoCliente();
-                alert('¡Préstamo guardado y sincronizado en la nube!');
-            });
-        }
-
-        function aplicarAbono() {
-            let m = parseFloat(document.getElementById('inputAbonoMonto').value);
-            if (!m || m <= 0) return alert('Ingrese un monto válido');
-
-            let nuevoSaldo = clienteActivo.saldo - m;
-            let nuevoHistorial = [...(clienteActivo.historial || [])];
-            nuevoHistorial.unshift({ fecha: new Date().toLocaleDateString('es-NI'), monto: m });
-
-            // Actualizar documento en la nube
-            db.collection("clientes").doc(clienteActivo.id).update({
-                saldo: nuevoSaldo,
-                historial: nuevoHistorial,
-                pagado: (nuevoSaldo <= 0)
-            }).then(() => {
-                document.getElementById('inputAbonoMonto').value = '';
-                alert(`Abono de C$ ${m.toFixed(2)} sincronizado en la nube.`);
-                
-                // Actualizar interfaz visual de inmediato
-                clienteActivo.saldo = nuevoSaldo;
-                clienteActivo.historial = nuevoHistorial;
-                document.getElementById('kdSaldo').innerText = `C$ ${clienteActivo.saldo.toFixed(2)}`;
-                actualizarTicketPreview(m);
-                renderHistorialKardex();
-            });
-        }
-
-        function aplicarCuotaCompleta() {
-            document.getElementById('inputAbonoMonto').value = clienteActivo.cuota.toFixed(2);
-            aplicarAbono();
-        }
-
-        function guardarUsuario(e) {
-            e.preventDefault();
-            db.collection("usuarios").add({
-                nombre: document.getElementById('usrNombre').value.trim(),
-                cedula: document.getElementById('usrCedula').value.trim(),
-                user: document.getElementById('usrUser').value.trim(),
-                pass: document.getElementById('usrPass').value.trim(),
-                rol: document.getElementById('usrRol').value
-            }).then(() => {
-                alert('Usuario registrado y sincronizado en la red.');
-                e.target.reset();
-            });
-        }
-
-        // 5. RENDERIZADO VISUAL
-        function renderClientes() {
-            let cont = document.getElementById('listaClientesContainer');
-            let q = document.getElementById('searchClientInput').value.toLowerCase();
-            let list = clientes.filter(c => c.nombre.toLowerCase().includes(q) || c.cedula.includes(q));
-
-            cont.innerHTML = list.map(c => `
-                <div onclick="abrirKardex('${c.id}')" class="glass-card p-3 rounded-xl flex justify-between items-center cursor-pointer hover:bg-gray-800/80 transition">
-                    <div>
-                        <h4 class="font-bold text-sm text-white">${c.nombre}</h4>
-                        <p class="text-[10px] text-gray-400">Cédula: ${c.cedula}</p>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-xs font-black text-blue-400 block">C$ ${c.saldo.toFixed(2)}</span>
-                        <span class="text-[9px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-bold">Cuota: C$ ${c.cuota.toFixed(2)}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function renderScorecardList() {
-            let cont = document.getElementById('scorecardClientList');
-            cont.innerHTML = clientes.map(c => `
-                <div onclick="abrirKardex('${c.id}')" class="p-3 flex justify-between items-center ${c.pagado ? 'bg-emerald-900/30' : 'bg-transparent'} hover:bg-gray-800 transition cursor-pointer">
-                    <div class="flex flex-col">
-                        <strong class="text-white text-[11px] font-black tracking-wide">${c.nombre}</strong>
-                        <span class="text-[10px] text-gray-300 mt-1">${c.fecha1 || ''}</span>
-                        <span class="text-[9px] text-gray-500 italic">${c.fecha2 || ''}</span>
-                    </div>
-                    <div class="flex flex-col items-end text-right">
-                        <strong class="text-white text-[11px] font-black">NIO ${c.saldo.toLocaleString('es-NI', {minimumFractionDigits:2})}</strong>
-                        <span class="text-[10px] text-gray-300 mt-0.5">${c.cuota.toLocaleString('es-NI', {minimumFractionDigits:2})}</span>
-                        <span class="text-[9px] mt-1 px-2 py-0.5 rounded font-bold ${c.badgeColor}">${c.badgeText}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function renderUsuarios() {
-            let cont = document.getElementById('listaUsuariosContainer');
-            cont.innerHTML = usuarios.map(u => `
-                <div class="bg-gray-900/60 p-2.5 rounded-xl border border-gray-800 flex justify-between items-center">
-                    <div>
-                        <strong class="text-white block">${u.nombre}</strong>
-                        <span class="text-[9px] text-gray-400">User: ${u.user} | Cédula: ${u.cedula}</span>
-                    </div>
-                    <span class="text-[9px] uppercase px-2 py-0.5 rounded font-bold ${u.rol === 'admin' ? 'bg-purple-500/20 text-purple-300' : 'bg-blue-500/20 text-blue-300'}">${u.rol}</span>
-                </div>
-            `).join('');
-        }
-
-        function renderHistorialKardex() {
-            let cont = document.getElementById('kdHistorial');
-            if (!clienteActivo.historial || clienteActivo.historial.length === 0) {
-                cont.innerHTML = `<span class="text-gray-500 italic">Sin abonos registrados</span>`;
-                return;
-            }
-            cont.innerHTML = clienteActivo.historial.map(h => `
-                <div class="flex justify-between border-b border-gray-800 pb-1">
-                    <span class="text-gray-400">${h.fecha}</span>
-                    <strong class="text-emerald-400">- C$ ${h.monto.toFixed(2)}</strong>
-                </div>
-            `).join('');
-        }
-
-        function abrirKardex(id) {
-            clienteActivo = clientes.find(c => c.id === id);
-            if (!clienteActivo) return;
-
-            document.getElementById('kdNombre').innerText = clienteActivo.nombre;
-            document.getElementById('kdCedula').innerText = clienteActivo.cedula;
-            document.getElementById('kdSaldo').innerText = `C$ ${clienteActivo.saldo.toFixed(2)}`;
-            document.getElementById('kdCuotaValor').innerText = `C$ ${clienteActivo.cuota.toFixed(2)}`;
-            
-            document.getElementById('btnLlamar').href = `tel:${clienteActivo.telefono}`;
-            document.getElementById('btnWhatsapp').href = `https://wa.me/505${clienteActivo.telefono}?text=Hola%20${encodeURIComponent(clienteActivo.nombre)},%20le%20recordamos%20su%20pago.`;
-            document.getElementById('btnMapa').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clienteActivo.direccion + ', Matagalpa')}`;
-
-            actualizarTicketPreview(0);
-            renderHistorialKardex();
-            document.getElementById('modalKardex').classList.remove('hidden');
-        }
-
-        function filtrarClientes() { renderClientes(); }
-        function abrirModalNuevoCliente() { document.getElementById('modalNuevoCliente').classList.remove('hidden'); }
-        function cerrarModalNuevoCliente() { document.getElementById('modalNuevoCliente').classList.add('hidden'); }
-        function cerrarKardex() { document.getElementById('modalKardex').classList.add('hidden'); }
-
-        function calcularSimulacion() {
-            const principal = parseFloat(document.getElementById('simMonto').value) || 0;
-            let comision = 200; 
-            if (principal >= 10000 && principal < 15000) comision = 400;
-            else if (principal >= 15000 && principal < 25000) comision = 600;
-            else if (principal >= 25000 && principal < 50000) comision = 800;
-            else if (principal >= 50000) comision = 1200;
-
-            const financiado = principal + comision;
-            const interesTotal = financiado * 0.30; 
-            const totalPagar = financiado + interesTotal;
-            const cuotaEfectiva = totalPagar / 40;  
-
-            document.getElementById('simComision').textContent = `C$ ${comision.toFixed(2)}`;
-            document.getElementById('simFinanciado').textContent = `C$ ${financiado.toLocaleString('es-NI', {minimumFractionDigits:2})}`;
-            document.getElementById('simInteres').textContent = `C$ ${interesTotal.toLocaleString('es-NI', {minimumFractionDigits:2})}`;
-            document.getElementById('simTotal').textContent = `C$ ${totalPagar.toLocaleString('es-NI', {minimumFractionDigits:2})}`;
-            document.getElementById('simCuota').textContent = `C$ ${cuotaEfectiva.toFixed(2)}`;
-        }
-
-        function actualizarTicketPreview(montoAbonado) {
-            let nom = clienteActivo.nombre.padEnd(23).substring(0, 23);
-            let monStr = (`C$ ${montoAbonado.toFixed(2)}`).padStart(14);
-            let salStr = (`C$ ${clienteActivo.saldo.toFixed(2)}`).padStart(14);
-
-            document.getElementById('ticketPreviewBox').innerText = 
-`================================
-     CRÉDITOS Y COBRANZAS       
-     MATAGALPA - NICARAGUA      
-================================
-RECIBO DE PAGO:  #REC-20261028-01
---------------------------------
-CLIENTE: ${nom}
---------------------------------
-MONTO RECIBIDO: ${monStr}
-NUEVO SALDO:    ${salStr}
-================================
-  ¡GRACIAS POR SU PUNTUAL PAGO! `;
-        }
-
-        function imprimirReciboBT() {
-            if (!clienteActivo) return alert('Seleccione un cliente');
-            alert(`Imprimiendo ticket Bluetooth PT210 para ${clienteActivo.nombre}...`);
-        }
-
-        let chart;
-        function initChart() {
-            let ctx = document.getElementById('scoreChart').getContext('2d');
-            if (chart) chart.destroy();
-
-            const estados = ['Mora (Alerta)', 'Para Hoy', 'Al Día (Pagado)', 'Al Corriente'];
-            const colores = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6']; 
-            
-            // Calculo dinámico para la gráfica basado en Firebase (ejemplo simplificado)
-            let total = clientes.reduce((acc, curr) => acc + curr.saldo, 0);
-            const montos = total > 0 ? [total*0.3, total*0.1, total*0.2, total*0.4] : [1,1,1,1]; 
-
-            chart = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: estados,
-                    datasets: [{
-                        data: montos,
-                        backgroundColor: colores,
-                        borderWidth: 0
-                    }]
-                },
-                options: { 
-                    plugins: { legend: { display: false } },
-                    animation: { animateRotate: true, duration: 1200 }
-                }
-            });
-
-            document.getElementById('scorecardHistorial').innerHTML = estados.map((estado, i) => `
-                <div class="flex justify-between items-center bg-gray-900/40 p-2 rounded-lg">
-                    <div class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full" style="background-color: ${colores[i]}"></span>
-                        <span class="text-white text-[10px] font-bold">${estado}</span>
-                    </div>
-                    <span class="text-[10px] font-black" style="color: ${colores[i]}">C$ ${montos[i].toLocaleString('es-NI', {minimumFractionDigits:2})}</span>
-                </div>
-            `).join('');
-
-            document.getElementById('totalCarteraDisplay').innerText = `C$ ${total.toLocaleString('es-NI', {minimumFractionDigits:2})}`;
-        }
-
-        calcularSimulacion();
-    </script>
+    <!-- Carga del archivo modular JavaScript -->
+    <script src="app.js"></script>
     <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./pwabuilder-sw.js'); }</script>
 </body>
 </html>
