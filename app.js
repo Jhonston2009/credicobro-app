@@ -11,7 +11,8 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 let usuarios = [];
-let clientes = [];
+let todosLosClientes = []; // NUEVO: Almacena la base de datos completa de Firebase
+let clientes = []; // Cartera filtrada según quién inicie sesión
 let usuarioLogueado = null;
 let clienteActivo = null;
 let chart;
@@ -41,17 +42,30 @@ db.collection("usuarios").onSnapshot((snapshot) => {
     if (usuarios.length === 0) {
         db.collection("usuarios").add({ nombre: 'Admin Principal', user: 'admin', pass: '1234', rol: 'admin', cedula: '000-000000-0000A' });
     }
-    if (usuarioLogueado) renderUsuarios();
+    if (usuarioLogueado && usuarioLogueado.rol === 'admin') renderUsuarios();
 });
 
 db.collection("clientes").onSnapshot((snapshot) => {
-    clientes = [];
-    snapshot.forEach((doc) => clientes.push({ id: doc.id, ...doc.data() }));
-    if (usuarioLogueado) {
-        renderClientes();
-        renderScorecardList();
-        initChart(); 
+    todosLosClientes = [];
+    snapshot.forEach((doc) => todosLosClientes.push({ id: doc.id, ...doc.data() }));
+    procesarCarteraLocal(); // Al detectar cambios en la nube, procesa el filtro
+});
+
+// NUEVA FUNCIÓN: Filtra los clientes según el rol del usuario
+function procesarCarteraLocal() {
+    if (!usuarioLogueado) return;
+    
+    if (usuarioLogueado.rol === 'admin') {
+        clientes = todosLosClientes; // El admin ve absolutamente todo
+    } else {
+        // El analista solo ve los clientes que él mismo creó
+        clientes = todosLosClientes.filter(c => c.creadorUser === usuarioLogueado.user);
     }
+    
+    renderClientes();
+    renderScorecardList();
+    initChart();
+}
 });
 
 // 4. FUNCIONES DE SESIÓN E INTERFAZ
@@ -74,10 +88,10 @@ function entrarSistema() {
         document.getElementById('loginUser').value = '';
         document.getElementById('loginPass').value = '';
 
-        renderClientes();
-        renderUsuarios();
-        renderScorecardList();
-        initChart();
+        // Procesar y mostrar solo los datos permitidos
+        procesarCarteraLocal();
+        if (encontrado.rol === 'admin') renderUsuarios();
+        
         switchTab('scorecard');
     } else {
         alert('Credenciales incorrectas.');
@@ -86,6 +100,7 @@ function entrarSistema() {
 
 function cerrarSesion() {
     usuarioLogueado = null;
+    clientes = []; // Vacía la cartera visible al cerrar sesión
     document.getElementById('loginScreen').classList.remove('hidden');
     switchTab('scorecard');
 }
@@ -128,7 +143,7 @@ function guardarNuevoCliente(e) {
     let totalPagar = financiado * (1 + interesDecimal);
     let cuota = totalPagar / plazo;
 
-    db.collection("clientes").add({
+db.collection("clientes").add({
         nombre: nombre,
         cedula: cedula,
         telefono: tel,
@@ -138,6 +153,8 @@ function guardarNuevoCliente(e) {
         fecha1: new Date().toLocaleDateString('es-NI'),
         fecha2: `Próx. pago: ${d}/${m}/${y}`, 
         fechaPagoRaw: fechaPagoRaw,
+        creadorUser: usuarioLogueado.user,     // Identificador para el filtro
+        creadorNombre: usuarioLogueado.nombre, // Nombre para mostrarle al Admin
         pagado: false,
         historial: []
     }).then(() => {
@@ -232,18 +249,24 @@ function renderClientes() {
     let q = document.getElementById('searchClientInput').value.toLowerCase();
     let list = clientes.filter(c => c.nombre.toLowerCase().includes(q) || c.cedula.includes(q));
 
-    cont.innerHTML = list.map(c => `
+    cont.innerHTML = list.map(c => {
+        // Si es Admin, le muestra el nombre del Analista debajo del nombre del cliente
+        let infoCreador = (usuarioLogueado.rol === 'admin' && c.creadorNombre) 
+            ? ` | Asesor: ${c.creadorNombre}` 
+            : '';
+
+        return `
         <div onclick="abrirKardex('${c.id}')" class="glass-card p-3 rounded-xl flex justify-between items-center cursor-pointer hover:bg-gray-800/80 transition">
             <div>
                 <h4 class="font-bold text-sm text-white">${c.nombre}</h4>
-                <p class="text-[10px] text-gray-400">Cédula: ${c.cedula}</p>
+                <p class="text-[10px] text-gray-400">Cédula: ${c.cedula}${infoCreador}</p>
             </div>
             <div class="text-right">
                 <span class="text-xs font-black text-blue-400 block">C$ ${c.saldo.toFixed(2)}</span>
                 <span class="text-[9px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-bold">Cuota: C$ ${c.cuota.toFixed(2)}</span>
             </div>
         </div>
-    `).join('');
+    `}).join('');
 }
 
 function renderScorecardList() {
