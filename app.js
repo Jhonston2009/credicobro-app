@@ -464,6 +464,83 @@ function imprimirReciboBT() {
 }
 
 // Iniciar procesos que dependen de que la página ya esté cargada
+// 9. FUNCIONES PARA NUEVO CARGO / REFINANCIAMIENTO
+function abrirModalNuevoCargo() {
+    document.getElementById('ncClienteNombre').innerText = clienteActivo.nombre;
+    document.getElementById('ncSaldoActual').innerText = `C$ ${clienteActivo.saldo.toFixed(2)}`;
+    document.getElementById('ncMonto').value = '';
+    document.getElementById('ncFechaPago').value = clienteActivo.fechaPagoRaw || '';
+    
+    calcularNuevoCargo();
+    cerrarKardex(); 
+    document.getElementById('modalNuevoCargo').classList.remove('hidden');
+}
+
+function cerrarModalNuevoCargo() {
+    document.getElementById('modalNuevoCargo').classList.add('hidden');
+    abrirKardex(clienteActivo.id); 
+}
+
+function calcularNuevoCargo() {
+    let montoAdicional = parseFloat(document.getElementById('ncMonto').value) || 0;
+    let interesDecimal = parseFloat(document.getElementById('ncInteres').value) / 100 || 0.30;
+    let plazo = parseInt(document.getElementById('ncPlazo').value) || 40;
+
+    let comision = 0;
+    if (montoAdicional > 0) {
+        comision = 200;
+        if (montoAdicional >= 10000 && montoAdicional < 15000) comision = 400;
+        else if (montoAdicional >= 15000 && montoAdicional < 25000) comision = 600;
+        else if (montoAdicional >= 25000 && montoAdicional < 50000) comision = 800;
+        else if (montoAdicional >= 50000) comision = 1200;
+    }
+
+    let financiado = montoAdicional + comision;
+    let totalAdicionalPagar = financiado * (1 + interesDecimal);
+    
+    let nuevoSaldoGlobal = clienteActivo.saldo + totalAdicionalPagar;
+    let nuevaCuota = nuevoSaldoGlobal / plazo;
+
+    document.getElementById('ncNuevoSaldo').innerText = `C$ ${nuevoSaldoGlobal.toLocaleString('es-NI', {minimumFractionDigits:2})}`;
+    document.getElementById('ncNuevaCuota').innerText = `C$ ${nuevaCuota.toLocaleString('es-NI', {minimumFractionDigits:2})}`;
+    
+    return { nuevoSaldoGlobal, nuevaCuota };
+}
+
+function guardarNuevoCargo(e) {
+    e.preventDefault();
+    let montoAdicional = parseFloat(document.getElementById('ncMonto').value);
+    if (!montoAdicional || montoAdicional <= 0) return alert('Ingrese un monto válido mayor a 0');
+
+    let calcs = calcularNuevoCargo();
+    const fechaPagoRaw = document.getElementById('ncFechaPago').value;
+    const concepto = document.getElementById('ncConcepto').value.trim();
+    const [y, m, d] = fechaPagoRaw.split('-');
+
+    // Registramos el cargo en negativo para que renderHistorial lo muestre en naranja
+    let nuevoHistorial = [...(clienteActivo.historial || [])];
+    nuevoHistorial.unshift({ fecha: new Date().toLocaleDateString('es-NI'), monto: -montoAdicional, nota: concepto });
+
+    db.collection("clientes").doc(clienteActivo.id).update({
+        saldo: calcs.nuevoSaldoGlobal,
+        cuota: calcs.nuevaCuota,
+        fecha2: `Próx. pago: ${d}/${m}/${y}`,
+        fechaPagoRaw: fechaPagoRaw,
+        historial: nuevoHistorial,
+        pagado: false
+    }).then(() => {
+        alert('Cargo adicional aplicado y cuota recalculada.');
+        document.getElementById('modalNuevoCargo').classList.add('hidden');
+        
+        // Actualiza el Kardex localmente de inmediato
+        clienteActivo.saldo = calcs.nuevoSaldoGlobal;
+        clienteActivo.cuota = calcs.nuevaCuota;
+        clienteActivo.historial = nuevoHistorial;
+        if(fechaPagoRaw) clienteActivo.fechaPagoRaw = fechaPagoRaw;
+        
+        abrirKardex(clienteActivo.id);
+    }).catch(err => alert('Error: ' + err));
+}
 window.onload = () => {
     calcularSimulacion();
 };
