@@ -306,15 +306,29 @@ function renderUsuarios() {
 function renderHistorialKardex() {
     let cont = document.getElementById('kdHistorial');
     if (!clienteActivo.historial || clienteActivo.historial.length === 0) {
-        cont.innerHTML = `<span class="text-gray-500 italic">Sin abonos registrados</span>`;
+        cont.innerHTML = `<span class="text-gray-500 italic">Sin movimientos registrados</span>`;
         return;
     }
-    cont.innerHTML = clienteActivo.historial.map(h => `
-        <div class="flex justify-between border-b border-gray-800 pb-1">
-            <span class="text-gray-400">${h.fecha}</span>
-            <strong class="text-emerald-400">- C$ ${h.monto.toFixed(2)}</strong>
-        </div>
-    `).join('');
+    cont.innerHTML = clienteActivo.historial.map(h => {
+        // Si el monto es negativo, es un Cargo (Préstamo)
+        if (h.monto < 0) {
+            return `
+            <div class="flex justify-between items-center border-b border-gray-800 pb-1">
+                <div>
+                    <span class="text-gray-400 block">${h.fecha}</span>
+                    <span class="text-[8px] text-orange-400 uppercase font-bold">${h.nota || 'Cargo'}</span>
+                </div>
+                <strong class="text-orange-500">+ C$ ${Math.abs(h.monto).toFixed(2)}</strong>
+            </div>`;
+        } else {
+            // Si el monto es positivo, es un Abono regular
+            return `
+            <div class="flex justify-between items-center border-b border-gray-800 pb-1">
+                <span class="text-gray-400">${h.fecha}</span>
+                <strong class="text-emerald-400">- C$ ${h.monto.toFixed(2)}</strong>
+            </div>`;
+        }
+    }).join('');
 }
 
 // 7. CONTROLES DEL MODAL KARDEX Y SIMULADOR
