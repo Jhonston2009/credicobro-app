@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CrediCobro Pro - Matagalpa</title>
+    <title>Gestor de cobro - Matagalpa</title>
     
     <!-- Librerías Externas -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -219,14 +219,35 @@
                 <h4 class="text-[10px] font-bold text-gray-400 uppercase mb-1">Historial</h4>
                 <div id="kdHistorial" class="space-y-1.5 text-[10px] max-h-24 overflow-y-auto"></div>
             </div>
-            <div class="pt-2 border-t border-gray-800 flex gap-2">
-                <button type="button" onclick="imprimirReciboBT()" class="flex-1 bg-indigo-600 text-white font-bold text-[10px] py-2 rounded-xl">Imprimir BT</button>
-                <button type="button" onclick="cerrarKardex()" class="flex-1 bg-gray-800 text-gray-300 text-xs py-2 rounded-xl font-bold">Cerrar</button>
+           <!-- Controles de Admin (Se ocultan para Analistas) -->
+            <div id="kardexAdminActions" class="pt-2 border-t border-gray-800 flex gap-2 hidden">
+                <button type="button" onclick="abrirModalEditar()" class="flex-1 bg-amber-600 text-white font-bold text-[10px] py-2 rounded-xl">Editar Datos</button>
+                <button type="button" onclick="eliminarCliente()" class="flex-1 bg-red-600 text-white font-bold text-[10px] py-2 rounded-xl">Eliminar Cliente</button>
             </div>
         </div>
     </div>
 
     <!-- Carga del archivo modular JavaScript -->
+    <!-- MODAL EDITAR CLIENTE -->
+    <div id="modalEditarCliente" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-modal rounded-2xl w-full max-w-xs p-4 space-y-3">
+            <div class="flex justify-between items-center border-b border-gray-800 pb-2">
+                <h3 class="text-xs font-bold text-amber-400 uppercase"><i class="fa-solid fa-pen"></i> Editar Cliente</h3>
+                <button type="button" onclick="cerrarModalEditar()" class="text-gray-400 font-bold text-lg">&times;</button>
+            </div>
+            <form id="formEditarCliente" onsubmit="guardarEdicionCliente(event)" class="space-y-2 text-xs">
+                <input type="text" id="editCliNombre" placeholder="Nombre Completo" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-amber-500">
+                <input type="text" id="editCliCedula" placeholder="Cédula" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-amber-500">
+                <input type="text" id="editCliTel" placeholder="Teléfono" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-amber-500">
+                <input type="text" id="editCliDireccion" placeholder="Dirección" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-amber-500">
+                <div>
+                    <label class="text-[10px] text-gray-400 font-bold block mb-1">Próxima Fecha de Pago</label>
+                    <input type="date" id="editCliFechaPago" required class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2.5 text-white outline-none focus:border-amber-500">
+                </div>
+                <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 rounded-lg transition mt-2">Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
     <script src="app.js"></script>
     <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./pwabuilder-sw.js'); }</script>
 </body>
