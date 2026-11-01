@@ -11,8 +11,8 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 let usuarios = [];
-let todosLosClientes = []; // NUEVO: Almacena la base de datos completa de Firebase
-let clientes = []; // Cartera filtrada según quién inicie sesión
+let todosLosClientes = []; 
+let clientes = []; 
 let usuarioLogueado = null;
 let clienteActivo = null;
 let chart;
@@ -29,7 +29,7 @@ function obtenerEstado(fechaRaw) {
     let diffDias = Math.round((fechaPago - hoy) / (1000 * 60 * 60 * 24));
     
     if (diffDias > 1) return { idx: 0, nombre: 'Al Corriente', color: '#9ca3af', badge: 'bg-gray-500 text-white' };
-    if (diffDias === 1) return { idx: 1, nombre: 'Próximo', color: '#22c55e', badge: 'bg-green-500 text-white' };
+    if (diffDias === 1) return { idx: 1, nombre: 'Próximo (Mañana)', color: '#22c55e', badge: 'bg-green-500 text-white' };
     if (diffDias === 0) return { idx: 2, nombre: 'Para Hoy', color: '#eab308', badge: 'bg-yellow-500 text-black' };
     if (diffDias >= -3 && diffDias < 0) return { idx: 3, nombre: 'Vencido', color: '#f97316', badge: 'bg-orange-500 text-white' };
     return { idx: 4, nombre: 'Alerta (Mora)', color: '#ef4444', badge: 'bg-red-500 text-white' };
@@ -48,17 +48,15 @@ db.collection("usuarios").onSnapshot((snapshot) => {
 db.collection("clientes").onSnapshot((snapshot) => {
     todosLosClientes = [];
     snapshot.forEach((doc) => todosLosClientes.push({ id: doc.id, ...doc.data() }));
-    procesarCarteraLocal(); // Al detectar cambios en la nube, procesa el filtro
+    procesarCarteraLocal(); 
 });
 
-// NUEVA FUNCIÓN: Filtra los clientes según el rol del usuario
 function procesarCarteraLocal() {
     if (!usuarioLogueado) return;
     
     if (usuarioLogueado.rol === 'admin') {
-        clientes = todosLosClientes; // El admin ve absolutamente todo
+        clientes = todosLosClientes; 
     } else {
-        // El analista solo ve los clientes que él mismo creó
         clientes = todosLosClientes.filter(c => c.creadorUser === usuarioLogueado.user);
     }
     
@@ -66,12 +64,17 @@ function procesarCarteraLocal() {
     renderScorecardList();
     initChart();
 }
-});
 
 // 4. FUNCIONES DE SESIÓN E INTERFAZ
 function entrarSistema() {
     let inputUser = document.getElementById('loginUser').value.trim();
     let inputPass = document.getElementById('loginPass').value.trim();
+    
+    if(usuarios.length === 0) {
+        alert('Cargando base de datos segura... Da clic de nuevo en 2 segundos.');
+        return;
+    }
+
     let encontrado = usuarios.find(x => x.user === inputUser && x.pass === inputPass);
     
     if (encontrado) {
@@ -88,7 +91,6 @@ function entrarSistema() {
         document.getElementById('loginUser').value = '';
         document.getElementById('loginPass').value = '';
 
-        // Procesar y mostrar solo los datos permitidos
         procesarCarteraLocal();
         if (encontrado.rol === 'admin') renderUsuarios();
         
@@ -100,7 +102,7 @@ function entrarSistema() {
 
 function cerrarSesion() {
     usuarioLogueado = null;
-    clientes = []; // Vacía la cartera visible al cerrar sesión
+    clientes = []; 
     document.getElementById('loginScreen').classList.remove('hidden');
     switchTab('scorecard');
 }
@@ -143,7 +145,7 @@ function guardarNuevoCliente(e) {
     let totalPagar = financiado * (1 + interesDecimal);
     let cuota = totalPagar / plazo;
 
-db.collection("clientes").add({
+    db.collection("clientes").add({
         nombre: nombre,
         cedula: cedula,
         telefono: tel,
@@ -153,15 +155,15 @@ db.collection("clientes").add({
         fecha1: new Date().toLocaleDateString('es-NI'),
         fecha2: `Próx. pago: ${d}/${m}/${y}`, 
         fechaPagoRaw: fechaPagoRaw,
-        creadorUser: usuarioLogueado.user,     // Identificador para el filtro
-        creadorNombre: usuarioLogueado.nombre, // Nombre para mostrarle al Admin
+        creadorUser: usuarioLogueado.user,     
+        creadorNombre: usuarioLogueado.nombre, 
         pagado: false,
         historial: []
     }).then(() => {
         document.getElementById('formNuevoCliente').reset();
         cerrarModalNuevoCliente();
         alert('¡Préstamo guardado!');
-    });
+    }).catch(err => alert('Error: ' + err));
 }
 
 function aplicarAbono() {
@@ -184,7 +186,7 @@ function aplicarAbono() {
         document.getElementById('kdSaldo').innerText = `C$ ${clienteActivo.saldo.toFixed(2)}`;
         actualizarTicketPreview(m);
         renderHistorialKardex();
-    });
+    }).catch(err => alert('Error: ' + err));
 }
 
 function aplicarCuotaCompleta() {
@@ -203,7 +205,7 @@ function guardarUsuario(e) {
     }).then(() => {
         alert('Usuario registrado.');
         e.target.reset();
-    });
+    }).catch(err => alert('Error: ' + err));
 }
 
 // 6. ACTUALIZACIONES VISUALES
@@ -250,7 +252,6 @@ function renderClientes() {
     let list = clientes.filter(c => c.nombre.toLowerCase().includes(q) || c.cedula.includes(q));
 
     cont.innerHTML = list.map(c => {
-        // Si es Admin, le muestra el nombre del Analista debajo del nombre del cliente
         let infoCreador = (usuarioLogueado.rol === 'admin' && c.creadorNombre) 
             ? ` | Asesor: ${c.creadorNombre}` 
             : '';
@@ -330,66 +331,18 @@ function abrirKardex(id) {
     document.getElementById('btnWhatsapp').href = `https://wa.me/505${clienteActivo.telefono}?text=Hola%20${encodeURIComponent(clienteActivo.nombre)},%20le%20recordamos%20su%20pago.`;
     document.getElementById('btnMapa').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clienteActivo.direccion + ', Matagalpa')}`;
 
-    // LÓGICA DE ROLES: Mostrar u ocultar acciones de edición/eliminación
     let adminActions = document.getElementById('kardexAdminActions');
-    if (usuarioLogueado.rol === 'admin') {
-        adminActions.classList.remove('hidden');
-    } else {
-        adminActions.classList.add('hidden');
+    if (adminActions) {
+        if (usuarioLogueado.rol === 'admin') {
+            adminActions.classList.remove('hidden');
+        } else {
+            adminActions.classList.add('hidden');
+        }
     }
 
     actualizarTicketPreview(0);
     renderHistorialKardex();
     document.getElementById('modalKardex').classList.remove('hidden');
-}
-
-// 8. FUNCIONES DE EDICIÓN Y ELIMINACIÓN (SOLO ADMIN)
-function eliminarCliente() {
-    if (confirm(`¿Eliminar definitivamente a ${clienteActivo.nombre}? Esta acción borra todo su historial de Firebase y no se puede deshacer.`)) {
-        db.collection("clientes").doc(clienteActivo.id).delete().then(() => {
-            alert('Cliente eliminado de la base de datos.');
-            cerrarKardex();
-        }).catch(err => alert('Error: ' + err));
-    }
-}
-
-function abrirModalEditar() {
-    document.getElementById('editCliNombre').value = clienteActivo.nombre;
-    document.getElementById('editCliCedula').value = clienteActivo.cedula;
-    document.getElementById('editCliTel').value = clienteActivo.telefono;
-    document.getElementById('editCliDireccion').value = clienteActivo.direccion;
-    document.getElementById('editCliFechaPago').value = clienteActivo.fechaPagoRaw || '';
-    
-    cerrarKardex(); // Ocultar Kardex momentáneamente
-    document.getElementById('modalEditarCliente').classList.remove('hidden');
-}
-
-function cerrarModalEditar() {
-    document.getElementById('modalEditarCliente').classList.add('hidden');
-    abrirKardex(clienteActivo.id); // Volver al Kardex
-}
-
-function guardarEdicionCliente(e) {
-    e.preventDefault();
-    const nombre = document.getElementById('editCliNombre').value.trim();
-    const cedula = document.getElementById('editCliCedula').value.trim();
-    const tel = document.getElementById('editCliTel').value.trim();
-    const dir = document.getElementById('editCliDireccion').value.trim();
-    const fechaPagoRaw = document.getElementById('editCliFechaPago').value;
-    const [y, m, d] = fechaPagoRaw.split('-');
-
-    db.collection("clientes").doc(clienteActivo.id).update({
-        nombre: nombre,
-        cedula: cedula,
-        telefono: tel,
-        direccion: dir,
-        fecha2: `Próx. pago: ${d}/${m}/${y}`,
-        fechaPagoRaw: fechaPagoRaw
-    }).then(() => {
-        alert('Perfil actualizado correctamente.');
-        document.getElementById('modalEditarCliente').classList.add('hidden');
-        // Firebase onSnapshot actualizará la lista principal automáticamente
-    }).catch(err => alert('Error: ' + err));
 }
 
 function actualizarTicketPreview(montoAbonado) {
@@ -412,7 +365,10 @@ NUEVO SALDO:    ${salStr}
 }
 
 function calcularSimulacion() {
-    const principal = parseFloat(document.getElementById('simMonto').value) || 0;
+    let elMonto = document.getElementById('simMonto');
+    if(!elMonto) return;
+    
+    const principal = parseFloat(elMonto.value) || 0;
     let comision = 200; 
     if (principal >= 10000 && principal < 15000) comision = 400;
     else if (principal >= 15000 && principal < 25000) comision = 600;
@@ -431,14 +387,26 @@ function calcularSimulacion() {
     document.getElementById('simCuota').textContent = `C$ ${cuotaEfectiva.toFixed(2)}`;
 }
 
-function filtrarClientes() { renderClientes(); }
-function abrirModalNuevoCliente() { document.getElementById('modalNuevoCliente').classList.remove('hidden'); }
-function cerrarModalNuevoCliente() { document.getElementById('modalNuevoCliente').classList.add('hidden'); }
-function cerrarKardex() { document.getElementById('modalKardex').classList.add('hidden'); }
-function imprimirReciboBT() {
-    if (!clienteActivo) return alert('Seleccione un cliente');
-    alert(`Imprimiendo ticket Bluetooth PT210 para ${clienteActivo.nombre}...`);
+// 8. FUNCIONES DE EDICIÓN Y ELIMINACIÓN (SOLO ADMIN)
+function eliminarCliente() {
+    if (confirm(`¿Eliminar definitivamente a ${clienteActivo.nombre}? Esta acción borra todo su historial y no se puede deshacer.`)) {
+        db.collection("clientes").doc(clienteActivo.id).delete().then(() => {
+            alert('Cliente eliminado.');
+            cerrarKardex();
+        }).catch(err => alert('Error: ' + err));
+    }
 }
 
-// INICIALIZACIÓN BÁSICA
-calcularSimulacion();
+function abrirModalEditar() {
+    document.getElementById('editCliNombre').value = clienteActivo.nombre;
+    document.getElementById('editCliCedula').value = clienteActivo.cedula;
+    document.getElementById('editCliTel').value = clienteActivo.telefono;
+    document.getElementById('editCliDireccion').value = clienteActivo.direccion;
+    document.getElementById('editCliFechaPago').value = clienteActivo.fechaPagoRaw || '';
+    
+    cerrarKardex(); 
+    document.getElementById('modalEditarCliente').classList.remove('hidden');
+}
+
+function cerrarModalEditar() {
+    document.getElementById('modalEditarCliente').classList.add
